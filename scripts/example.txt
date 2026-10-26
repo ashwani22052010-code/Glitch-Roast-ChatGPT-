@@ -1,6 +1,7 @@
 # quality = 1080p
 # fps = 30
 # ratio = 16:9
+# ui = 100
 # human = on
 # intro = on
 # intro_text = Glitch Roast

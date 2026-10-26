@@ -10,7 +10,7 @@ from pathlib import Path
 BRAND = "Glitch Roast"               # intro me ye naam dikhega
 INTRO_S = 2.8                        # intro kitne second ka
 W, H = 1920, 1080                    # output ka "1080p" size (9:16 me 1080x1920) - settings() isko set karta hai
-VW, VH = 1280, 720                   # browser me tool ka CSS size (chhota = sab bada dikhega)
+VW, VH = 608, 342                    # browser me tool ka CSS size (chhota = sab bada dikhega); 16:9 = phone preview jaisa
 HERE = Path(__file__).resolve().parent
 SR = 44100
 
@@ -233,7 +233,7 @@ async ([items, o, ui]) => {
 }
 """
 
-OPT_RE = re.compile(r"^\s*#\s*(typing|speed|human|laptop|light|accent|ratio|view|music|sfx|click|keys|intro|shorts|auto|end|bgm|bgm_start|bgm_vol|quality|fps|intro_len|end_len|intro_vol|end_vol|meme_vol|"
+OPT_RE = re.compile(r"^\s*#\s*(typing|speed|human|laptop|light|accent|ratio|view|ui|music|sfx|click|keys|intro|shorts|auto|end|bgm|bgm_start|bgm_vol|quality|fps|intro_len|end_len|intro_vol|end_vol|meme_vol|"
                     r"gpt_delay|opp_delay|user_delay|send_delay|chat_size|think_gpt|think_gemini|think_grok|think_claude|start_delay|"
                     r"voice|voice_user|voice_ai|voice_gemini|voice_grok|voice_claude|voice_user_rate|voice_user_pitch|voice_ai_rate|voice_ai_pitch|voice_vol)\s*=\s*(\S+)\s*$", re.I)
 TEXT_OPT_RE = re.compile(r"^\s*#\s*(intro_text|end_text|end_sub)\s*=\s*(.+?)\s*$", re.I)
@@ -1037,7 +1037,9 @@ def settings(script, a):
     q = str(opts.get("quality", "")).lower()
     short = QUALITY.get(q) or int(round(1080 * a.dsf / 2)) // 2 * 2
     if q and q not in QUALITY: print(f"(quality='{q}' samajh nahi aayi. Options: 4k, 2k, 1080p, 720p)")
-    vh = int(fl("view", 720)); vh = max(360, min(1400, vh))
+    base = 720 if ratio == "9:16" else 342       # 16:9 / full = phone preview jaisa (tool 608x342 par chalta hai)
+    vh = fl("view", 0) or base / max(0.3, min(3.0, fl("ui", 100) / 100))
+    vh = int(round(max(180, min(1400, vh))))
     if ratio == "9:16":
         W, H = short, int(round(short * 16 / 9)) // 2 * 2; VW, VH = int(round(vh * 9 / 16)), vh
     else:
