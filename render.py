@@ -1004,18 +1004,22 @@ def gen_voice(S, out_dir):
 QUALITY = {"4k": 2160, "2160p": 2160, "2k": 1440, "1440p": 1440, "1080p": 1080, "720p": 720}
 TRUE = ("on", "yes", "1", "true")
 
-def load_ui():
-    """dashboard se sync hui tool settings (ui/settings.json) + topbar/footer images + message images"""
-    ls, saved = {}, {}
-    f = UI_DIR / "settings.json"
-    if f.is_file():
+def load_ui(ratio="16:9"):
+    """ui/auto.json (screenshots se bane topbar/footer ke size) -> ui/settings.json (tool se Sync) +
+    topbar/footer images (9:16 me pehle *_916 wali) + message images"""
+    tall, ls, saved = ratio == "9:16", {}, {}
+    def read(name):
+        f = UI_DIR / name
+        if not f.is_file(): return {}
         try:
-            ls = {str(k): str(v) for k, v in json.loads(f.read_text(encoding="utf-8")).items() if v is not None}
+            return {str(k): str(v) for k, v in json.loads(f.read_text(encoding="utf-8")).items() if v is not None}
         except Exception as e:
-            print(f"(ui/settings.json padh nahi paaya: {e})")
+            print(f"(ui/{name} padh nahi paaya: {e})"); return {}
+    ls.update(read("auto_916.json") if tall and (UI_DIR / "auto_916.json").is_file() else read("auto.json"))
+    ls.update(read("settings.json"))
     got = scan_media(UI_DIR, IMG_EXT)
     for key in UI_KEYS:
-        v = got.get(key.lower())
+        v = (got.get(key + "_916") if tall else None) or got.get(key.lower())
         if v: saved[key] = materialize(next(iter(v.values()))).resolve().as_uri()
     def numbered(folder):
         arr = {}
@@ -1077,7 +1081,7 @@ def settings(script, a):
     vtexts = {k: (r, tts_clean(t)) for k, (r, t) in vraw.items()}
     vtexts = {k: (r, t) for k, (r, t) in vtexts.items() if re.search(r"\w", t)}
     # ---- tool settings (dashboard sync) + script header
-    ls, ui = load_ui()
+    ls, ui = load_ui(ratio)
     for key, lk in (("gpt_delay", "dA"), ("opp_delay", "dG"), ("user_delay", "dU"), ("send_delay", "dSend"), ("chat_size", "chat_font_size"),
                     ("think_gpt", "gptBThink"), ("think_gemini", "geminiBThink"), ("think_grok", "grokBThink"), ("think_claude", "claudeBThink")):
         if re.fullmatch(r"\d+(\.\d+)?", str(opts.get(key, ""))): ls[lk] = str(opts[key])

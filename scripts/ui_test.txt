@@ -1,0 +1,19 @@
+# quality = 1080p
+# fps = 30
+# ratio = 16:9
+# human = on
+# intro = off
+User: Hey ChatGPT, who is the smartest AI? 🤔
+ChatGPT: Obviously me. But let's hear the others. 😏
+User: Gemini, what do you think?
+Gemini: I can search the entire internet in a second. ✨
+User: Grok?
+Grok: I'm the funniest one here, no contest. 😂
+User: And Claude?
+Claude: I think we all bring something different to the table.
+--- battle ---
+ChatGPT: 200 million weekly users. Your move.
+Gemini: I'm built into billions of phones.
+Grok: I live on X. I see everything. 👀
+Claude: Gentlemen, let's keep it civil.
+!end: Thanks for watching! | Glitch Roast
