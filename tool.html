@@ -1,0 +1,1093 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Ultimate 4-AI ChatGPT Cinematic Engine</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+  
+  :root {
+    /* ===== DARK MODE (Default ChatGPT) ===== */
+    --app-bg: #000000;
+    --text-primary: #e8e8e8;
+    --text-secondary: #888888;
+    --input-bg: #1d1d1f;
+    --input-border: transparent;
+    --input-placeholder: #757577;
+    --user-bubble-bg: #2a2a2d; 
+    --user-bubble-text: #ffffff;
+    --ai-text-color: #e2e2e2;
+    --icon-color: #ffffff;
+    --icon-btn-bg: #1c1c1e;
+    --btn-hover: rgba(255, 255, 255, 0.08);
+    
+    /* Default Dynamic Theme Accent & Sizes */
+    --accent-color: #2A85FF; 
+    --chat-fs: 16px;
+    --smoke-bg: linear-gradient(to bottom, rgba(0,0,0,1) 25%, rgba(0,0,0,0) 100%);
+    --claude-accent: #d97757;
+
+    /* ADJUSTABLE CHAT SPACE VARIABLES */
+    --chat-pt: 80px;
+    --chat-pb: 12px;
+    --inp-scale: 1;
+  }
+
+  .light-mode {
+    --app-bg: #ffffff;
+    --text-primary: #0d0d0d;
+    --text-secondary: #555555;
+    --input-bg: #f4f4f4;
+    --input-border: #e5e5e5;
+    --input-placeholder: #8e8e8e;
+    --ai-text-color: #0d0d0d;
+    --icon-color: #0d0d0d;
+    --icon-btn-bg: #f4f4f4;
+    --btn-hover: rgba(0, 0, 0, 0.05);
+    --smoke-bg: linear-gradient(to bottom, rgba(255,255,255,1) 25%, rgba(255,255,255,0) 100%);
+  }
+
+  .theme-blue { --accent-color: #2A85FF; --user-bubble-text: #ffffff; }
+  .theme-green { --accent-color: #10A37F; --user-bubble-text: #ffffff; }
+  .theme-yellow { --accent-color: #F2A900; --user-bubble-text: #000000; }
+  .theme-pink { --accent-color: #E258A3; --user-bubble-text: #ffffff; }
+  .theme-orange { --accent-color: #F2711C; --user-bubble-text: #ffffff; }
+  .theme-purple { --accent-color: #9B66E5; --user-bubble-text: #ffffff; }
+  .theme-black { --accent-color: #ffffff; --user-bubble-text: #000000; }
+  .light-mode.theme-black { --accent-color: #000000; --user-bubble-text: #ffffff; }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  
+  html, body { 
+    height:100%; width:100%; background:#000000; 
+    overflow:hidden; position:fixed; display: flex; align-items: center; justify-content: center;
+  }
+  
+  /* MAIN CONTAINER */
+  .app-container {
+    font-family:-apple-system,'SF Pro Text','Helvetica Neue',sans-serif;
+    background: var(--app-bg); color: var(--text-primary);
+    display:flex; flex-direction:column; width:100%; height:100%;
+    position:relative; overflow:hidden; 
+    transition: background 0.4s ease, background-color 0.4s ease, transform 1.2s cubic-bezier(0.22, 1, 0.36, 1), transform-origin 0s ease;
+    will-change: transform, transform-origin;
+  }
+
+  /* ===== 4-AI THEME OVERRIDES ===== */
+  .app-container.gemini-active { --app-bg: #131314; }
+  .app-container.grok-active { --app-bg: #000000; }
+  .app-container.claude-active { --app-bg: #111111; }
+  
+  .light-mode .app-container.gemini-active { --app-bg: #ffffff; }
+  .light-mode .app-container.grok-active { --app-bg: #ffffff; }
+  .light-mode .app-container.claude-active { --app-bg: #ffffff; }
+
+  .gemini-active #htmlTopbar, .gemini-active #customTopbarImg,
+  .grok-active #htmlTopbar, .grok-active #customTopbarImg,
+  .claude-active #htmlTopbar, .claude-active #customTopbarImg { display: none !important; opacity: 0; pointer-events: none; }
+  
+  .gemini-active #geminiTopbarImg { display: block !important; opacity: 1; }
+  .grok-active #grokTopbarImg { display: block !important; opacity: 1; }
+  .claude-active #claudeTopbarImg { display: block !important; opacity: 1; }
+
+  /* ===== BATTLE MODE OVERRIDES ===== */
+  .app-container.battle-mode .input-wrapper { display: none !important; }
+  .app-container.battle-mode .chat-area { justify-content: center; align-items: center; padding-top: 40px !important; }
+  .app-container.battle-mode .ai-block { width: 100%; max-width: 90%; margin: 0; align-items: flex-start; transition: all 0.3s ease; }
+  .app-container.battle-mode .ai-text { line-height: 1.5; }
+  .app-container.battle-mode .think-wrap { width: 100%; max-width: 90%; margin: 0; display: flex; justify-content: flex-start; transition: all 0.3s ease; }
+
+  body.ratio-9-16 .app-container { width: auto; max-width: 100vw; height: 100%; max-height: 100vh; aspect-ratio: 9 / 16; }
+  body.ratio-16-9 .app-container { width: 100%; max-width: 100vw; height: auto; max-height: 100vh; aspect-ratio: 16 / 9; }
+  body.ratio-16-9 .topbar { height: 45px !important; min-height: 45px !important; padding: 8px 16px 6px; }
+  body.ratio-16-9 .chat-area { padding: 50px 16px 8px !important; gap: 12px !important;}
+  body.ratio-16-9 .ai-img-el, body.ratio-16-9 .user-image-only { max-height: 140px !important; }
+
+  .top-smoke { position: absolute; top: 0; left: 0; right: 0; height: 120px; background: var(--smoke-bg); z-index: 40; pointer-events: none; transition: background 0.3s ease; }
+
+  /* ===== TOPBAR ===== */
+  .topbar { position: absolute; top: 0; left: 0; right: 0; display:flex; align-items:center; justify-content:space-between; padding:12px 16px 8px; background: transparent !important; z-index:50; pointer-events: none; transition: opacity 0.3s ease; }
+  .topbar > * { pointer-events: auto; }
+  .tb-circle { width:38px; height:38px; border-radius:50%; background: var(--icon-btn-bg); display:flex; align-items:center; justify-content:center; cursor:pointer; border:none; transition: background 0.3s ease; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+  .custom-topbar-img, #geminiTopbarImg, #grokTopbarImg, #claudeTopbarImg { position: absolute; top: 0; left: 0; width: 100%; height: auto; max-height: 80px; object-fit: contain; display: none; z-index: 50; pointer-events: none; background: transparent !important; transition: opacity 0.3s ease; }
+
+  /* ===== CHAT AREA ===== */
+  .chat-area { flex:1; overflow-y:auto; padding: var(--chat-pt) 16px var(--chat-pb) !important; display:flex; flex-direction:column; gap:0; scroll-behavior:smooth; }
+  .chat-area::-webkit-scrollbar { display:none; }
+  .custom-sugg-img { width: 100%; max-width: 300px; object-fit: contain; margin-top: auto; margin-bottom: 24px; display: none; transition: opacity 0.3s ease;}
+
+  @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+
+  .ai-block { display:flex; flex-direction:column; animation:fadeUp 0.15s ease; align-items: flex-start; width: 100%; padding-left: 0; margin-bottom: 20px;}
+  .ai-text { font-size: var(--chat-fs); line-height:1.6; color: var(--ai-text-color); padding:8px 0 6px; word-break:break-word; text-align: left; transition: font-size 0.2s, color 0.3s ease; }
+  .ai-img-el { max-width:45%; max-height:200px; border-radius:16px; margin:8px 0 5px; display:block; object-fit:contain; cursor:pointer; transition:transform 0.2s; }
+  
+  .action-row { display:flex; align-items:center; gap:18px; padding:4px 0 16px; }
+  .action-row svg { width:18px; height:18px; color: var(--icon-color); cursor:pointer; transition: color 0.3s ease; }
+  .a-dots { font-size:18px; color: var(--icon-color); font-weight:700; letter-spacing:2px; cursor:pointer; transition: color 0.3s ease; }
+  .custom-ai-footer { display: block; margin-top: 2px; width: auto; max-width:100%; object-fit: contain; transform-origin: left top; margin-bottom: 12px; }
+
+  /* USER BLOCK */
+  .user-row { display:flex; flex-direction:column; align-items:flex-end; gap:4px; margin:6px 0 12px; animation:fadeUp 0.2s ease; }
+  .user-bubble { background: var(--accent-color); color: var(--user-bubble-text); border-radius:22px; padding:10px 16px; font-size: var(--chat-fs) !important; line-height:1.5; max-width:80%; word-break:break-word; transition: font-size 0.2s, all 0.3s ease; }
+  .user-image-only { max-width:45%; max-height:200px; border-radius:16px; object-fit:contain; display:block; cursor:pointer; transition:transform 0.2s; }
+
+  /* 4-AI THINK ANIMATIONS */
+  .think-wrap { padding:10px 0 5px; animation:fadeUp 0.2s ease; }
+  .think-dot { width:10px; height:10px; border-radius:50%; background: var(--accent-color); animation:thinkPulse 0.6s ease-in-out infinite alternate; transition: background 0.3s ease; }
+  
+  .gemini-think { display: flex; gap: 5px; padding: 12px 0 6px; }
+  .gemini-think span { width: 7px; height: 7px; border-radius: 50%; background: var(--text-primary); animation: gWave 1.2s infinite ease-in-out; }
+  .gemini-think span:nth-child(1) { animation-delay: 0s; } .gemini-think span:nth-child(2) { animation-delay: 0.15s; } .gemini-think span:nth-child(3) { animation-delay: 0.3s; }
+  
+  .claude-think { width: 28px; height: 28px; animation: claudeSpin 3s linear infinite; display: flex; align-items: center; justify-content: center; margin-bottom: 4px; margin-top: 8px;}
+  .claude-think svg { width: 100%; height: 100%; stroke: var(--claude-accent); }
+  
+  .grok-thought { color: var(--text-secondary); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+  .grok-think-timer { color: #888888; font-size: 14.5px; font-weight: 500; display: flex; align-items: center; gap: 8px; margin-bottom: 8px; margin-top: 8px;}
+  
+  @keyframes thinkPulse { 0% { transform:scale(0.7); opacity:0.4; } 100% { transform:scale(1.3); opacity:1; } }
+  @keyframes gWave { 0%, 100% { transform: translateY(0); opacity:0.3; } 50% { transform: translateY(-5px); opacity:1; } }
+  @keyframes claudeSpin { 100% { transform: rotate(360deg); } }
+  @keyframes dotPulse { 0%, 100% { opacity: 0.2; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.1); } }
+  .dot-1 { animation: dotPulse 1.5s infinite ease-in-out; transform-origin: 5px 5px; } .dot-2 { animation: dotPulse 1.5s infinite ease-in-out 0.1s; transform-origin: 12px 5px; } .dot-3 { animation: dotPulse 1.5s infinite ease-in-out 0.2s; transform-origin: 19px 5px; } .dot-4 { animation: dotPulse 1.5s infinite ease-in-out 0.1s; transform-origin: 5px 12px; } .dot-5 { animation: dotPulse 1.5s infinite ease-in-out 0.2s; transform-origin: 12px 12px; } .dot-6 { animation: dotPulse 1.5s infinite ease-in-out 0.3s; transform-origin: 19px 12px; } .dot-7 { animation: dotPulse 1.5s infinite ease-in-out 0.2s; transform-origin: 5px 19px; } .dot-8 { animation: dotPulse 1.5s infinite ease-in-out 0.3s; transform-origin: 12px 19px; } .dot-9 { animation: dotPulse 1.5s infinite ease-in-out 0.4s; transform-origin: 19px 19px; }
+
+  /* ===== INPUT AREA ===== */
+  .input-wrapper { flex-shrink: 0; background: var(--app-bg); padding: 0 16px 12px 16px; display: flex; flex-direction: column; align-items: center; transition: background 0.3s ease; z-index: 20; zoom: var(--inp-scale); }
+  .chat-input-row { display: flex; flex-direction: column; background: var(--input-bg); border: 1px solid var(--input-border); border-radius: 28px; padding: 8px 12px; width: 100%; gap: 6px; min-height: 48px; transition: all 0.3s ease; }
+  .input-img-container { display: none; position: relative; padding: 4px 0 0 0; width: fit-content; }
+  .input-img-container.show { display: block; }
+  .input-img-preview { width: 120px; height: 120px; border-radius: 12px; object-fit: cover; border: 1px solid #333; display: block; }
+  .input-img-remove { position: absolute; top: 6px; right: 6px; width: 28px; height: 28px; border-radius: 50%; background: rgba(0, 0, 0, 0.85); border: 1px solid rgba(255,255,255,0.2); color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+  .input-main-row { display: flex; align-items: flex-end; gap: 4px; width: 100%; }
+  .plus-btn { width: 32px; height: 32px; min-width: 32px; border-radius: 50%; border: none; background: var(--btn-hover); display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; margin-bottom: 2px; }
+  .plus-btn svg { width: 18px; height: 18px; stroke: var(--text-secondary); stroke-width: 2.5;}
+  .input-box { flex: 1; display: flex; align-items: flex-end; gap: 4px; background: transparent; border: none; padding: 0; min-height: 32px; }
+  
+  #chatInput { flex: 1; height: auto; min-height: 32px; max-height: 120px; background: transparent; border: none; outline: none; color: var(--text-primary); font-size: 16px; font-family: inherit; padding: 6px 0; margin: 0; overflow-y: auto; line-height: 1.4; transition: color 0.3s ease; white-space: pre-wrap; word-break: break-word; cursor: text;}
+  #chatInput:empty:before { content: attr(data-placeholder); color: var(--input-placeholder); pointer-events: none; display: block; }
+  
+  .right-actions { display: flex; align-items: center; gap: 6px; flex-shrink: 0; margin-bottom: 2px; }
+  .mic-btn { width: 32px; height: 32px; min-width: 32px; border: none; border-radius: 50%; background: var(--btn-hover); display: flex; align-items: center; justify-content: center; cursor: pointer;}
+  .mic-btn svg { width: 18px; height: 18px; stroke: var(--text-secondary); stroke-width: 2; fill: none;}
+  .action-circle-btn { width: 32px; height: 32px; min-width: 32px; border: none; border-radius: 50%; background: var(--accent-color) !important; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; }
+  .action-circle-btn:active { transform: scale(0.92); }
+  .wave-icon { display: flex; align-items: center; justify-content: center; gap: 2.5px; height: 16px; }
+  .wave-icon span { display: block; width: 2.5px; background: #fff; border-radius: 1px;}
+  .wave-icon span:nth-child(1) { height: 6px; } .wave-icon span:nth-child(2) { height: 14px; } .wave-icon span:nth-child(3) { height: 10px; } .wave-icon span:nth-child(4) { height: 5px; }
+  .send-icon { display: none; width: 18px; height: 18px; stroke: #ffffff !important; stroke-width: 2.5; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .action-circle-btn.typing-mode .wave-icon { display: none; } .action-circle-btn.typing-mode .send-icon { display: block; }
+  .bottom-disclaimer { color: var(--text-secondary); font-size: 11px; margin-top: 10px; text-align: center; width: 100%; }
+  #imgInput { display:none; }
+
+  .fullscreen-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; justify-content: center; align-items: center; cursor: pointer; animation: fadeIn 0.3s ease; }
+  .fullscreen-overlay.show { display: flex; }
+  .fullscreen-overlay img { max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 12px; }
+
+  /* ===== PANEL ===== */
+  .panel-trigger { position:fixed; top:0; right:0; width:40px; height:100vh; z-index:299; cursor:pointer; background:transparent; }
+  .panel-trigger:hover { background:rgba(255,255,255,0.05); }
+  
+  .panel { position:fixed; top:0; right:0; width:380px; height:100vh; background:#0c0c0c; border-left:1px solid #1e1e1e; z-index:300; display:flex; flex-direction:column; padding:16px 16px 20px; overflow-y:auto; transition:transform 0.28s ease; transform:translateX(100%); color:#e0e0e0; }
+  .panel.open { transform:translateX(0); }
+  .panel::-webkit-scrollbar { display:none; }
+  
+  .p-title { font-size:12px; color:#00c853; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:12px; }
+  .p-status { font-size:11px; color:#aaa; min-height:16px; margin-bottom:12px; background:#111; padding:6px 10px; border-radius:8px; }
+  .p-lbl { font-size:12px; color:#aaa; font-weight:500; margin-bottom:6px; margin-top:12px; }
+  .p-hint { font-size:10px; color:#666; margin-top:4px; margin-bottom:8px; }
+  
+  .p-ta { background:#131313; border:1px solid #2a2a2a; border-radius:12px; color:#e0e0e0; font-size:13px; font-family:'SF Mono', monospace; padding:12px; resize:vertical; height: 120px; min-height: 80px; line-height:1.5; outline:none; width:100%; margin-bottom: 8px;}
+  .p-hr { border:none; border-top:1px solid #1e1e1e; margin:12px 0; }
+  
+  .color-picker-row { display:flex; align-items:center; gap:12px; margin: 8px 0; }
+  .color-dot { width:24px; height:24px; border-radius:50%; cursor:pointer; border:2px solid transparent; transition: transform 0.2s; }
+  .color-dot:hover { transform: scale(1.1); }
+  .color-dot.active { border-color: #fff; box-shadow: 0 0 8px rgba(255,255,255,0.5); }
+
+  .img-grid-full { display:grid; grid-template-columns:1fr; gap:10px; margin:6px 0; }
+  .img-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:6px 0; }
+  .img-box { background:#131313; border:1px solid #252525; border-radius:10px; padding:8px; text-align:center; }
+  .img-box label { display:block; font-size:10px; color:#888; margin-bottom:6px; font-weight: bold;}
+  .img-box input[type="file"] { display:none; }
+  .img-box .upload-btn, .img-box .clear-img { padding:4px 12px; border-radius:6px; font-size:11px; cursor:pointer; margin-top:4px; width:100%;}
+  .img-box .upload-btn { background:#1a2a1a; color:#00c853; border:1px solid #1a4a2a; }
+  .img-box .clear-img { background:#2a1a1a; color:#ff4444; border:1px solid #4a1a1a; }
+  .img-count { font-size:10px; color:#555; margin-top:4px; }
+  .img-list { margin-top:6px; max-height:100px; overflow-y:auto; }
+  .img-list::-webkit-scrollbar { display:none; }
+  .img-list-item { display:flex; align-items:center; justify-content:space-between; margin:2px 0; background:#1a1a1a; padding:4px 8px; border-radius:4px; }
+  .img-list-item .num { font-size:10px; color:#00c853; font-weight:700; }
+  .img-list-item .preview-thumb { width:30px; height:30px; border-radius:4px; object-fit:cover; margin:0 6px; }
+  .img-list-item .remove-img { background:#2a1a1a; color:#ff4444; border:none; border-radius:4px; padding:2px 8px; font-size:10px; cursor:pointer; }
+
+  .timing-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-top:6px; }
+  .t-item { background:#131313; border:1px solid #252525; border-radius:10px; padding:6px; }
+  .t-item label { display:block; font-size:10px; color:#aaa; margin-bottom:4px; text-align:center;}
+  .t-item input[type=number] { width:100%; background:transparent; border:none; color:#00c853; font-size:14px; font-weight:700; outline:none; text-align:center; }
+  
+  .typing-speed-row, .spd-row { display:flex; align-items:center; gap:10px; margin:8px 0; }
+  .typing-speed-row label, .spd-row label { font-size:12px; color:#aaa; flex-shrink:0; }
+  .typing-speed-row input, .spd-row input { flex:1; accent-color:#00c853; }
+  .speed-val, .spd-val { font-size:13px; color:#00c853; font-weight:700; width:40px; text-align:right; }
+
+  .ctrl-row { display:flex; gap:8px; margin:12px 0 8px; }
+  .c-btn { flex:1; padding:10px 6px; border-radius:12px; border:none; font-size:13px; font-weight:700; cursor:pointer; }
+  .c-btn.play  { background:#f2f2f2; color:#000; }
+  .c-btn.pause { background:#9a4500; color:#fff; }
+  .c-btn.reset { background:#222; color:#aaa; }
+
+  .aspect-btn { flex:1; padding:8px 4px; border-radius:6px; border:none; font-size:11px; font-weight:500; cursor:pointer; background:#131313; color:#aaa; border:1px solid #252525; transition:all 0.2s;}
+  .aspect-btn.active { background:#00c853; color:#000; border-color:#00c853; }
+  
+  .toggle-row { display:flex; align-items:center; gap:12px; margin:8px 0; padding:6px 12px; background:#131313; border-radius:10px; border:1px solid #252525; }
+  .toggle-row label { font-size:12px; color:#aaa; flex:1; }
+  .toggle-switch { width:44px; height:24px; background:#333; border-radius:12px; cursor:pointer; position:relative; transition:all 0.3s; flex-shrink:0; }
+  .toggle-switch.active { background:#00c853; }
+  .toggle-switch .toggle-knob { width:18px; height:18px; background:#fff; border-radius:50%; position:absolute; top:3px; left:3px; transition:all 0.3s; }
+  .toggle-switch.active .toggle-knob { left:23px; }
+  .toggle-status { font-size:11px; color:#555; min-width:30px; }
+  .toggle-status.active { color:#00c853; }
+
+  .p-btn { width:100%; padding:10px; border-radius:12px; border:none; font-size:13px; font-weight:600; cursor:pointer; margin:4px 0; }
+  .p-btn.load { background:#0b2a1a; color:#00c853; border:1px solid #1a4a2a; }
+  .p-btn.hide { background:#181818; color:#aaa; margin-top:12px; }
+  
+  .script-box-wrapper { background:#1a1a1a; padding:10px; border-radius:12px; border:1px solid #333; margin-bottom:12px; position:relative;}
+  .script-box-header { display:flex; justify-content:space-between; margin-bottom:8px; font-size:12px; color:#00c853; font-weight:bold;}
+  .add-box-btn { width:100%; background: transparent; border: 1px dashed #00c853; color: #00c853; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; margin-bottom:12px; }
+  .add-box-btn:hover { background: rgba(0,200,83,0.1); }
+  .remove-box-btn { background: transparent; border: none; color: #ff4444; cursor: pointer; font-size:12px; }
+</style>
+<style id="dynamicStyles"></style>
+</head>
+<body>
+
+<script>
+let inputImageData = null; 
+const userImages = []; 
+const aiImages = [];
+let thinkInterval = null;
+let thinkSeconds = 1;
+
+// NEW CODE HERE: INDEXEDDB FOR IMAGES
+let savedImages = {};
+async function initSavedImages() {
+    const keys = ['cgpt_tb_img', 'gemini_tb_img', 'grok_tb_img', 'claude_tb_img', 'cgpt_sg_img', 'cgpt_ft_img', 'gemini_ft_img', 'grok_ft_img', 'claude_ft_img'];
+    for (let k of keys) {
+        savedImages[k] = await idbGet(k) || safeGetLocal(k, null);
+    }
+    applyPermanentUI();
+}
+</script>
+
+<div class="app-container theme-blue" id="appContainer">
+  <div class="top-smoke"></div>
+  <div class="topbar" id="htmlTopbar">
+    <button class="tb-circle"><svg width="24" height="24" viewBox="0 0 24 24" stroke="var(--icon-color)" stroke-width="2.5" stroke-linecap="round" fill="none"><line x1="5" y1="10" x2="19" y2="10"/><line x1="5" y1="16" x2="13" y2="16"/></svg></button>
+    <button class="tb-circle" style="width: auto; padding: 0 16px; border-radius: 20px; gap: 14px;"><svg width="20" height="20" viewBox="0 0 24 24" stroke="var(--icon-color)" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><svg width="20" height="20" viewBox="0 0 24 24" fill="var(--icon-color)"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg></button>
+  </div>
+  
+  <img id="customTopbarImg" class="custom-topbar-img" src="" alt="Custom Topbar">
+  <img id="geminiTopbarImg" class="custom-topbar-img" src="" alt="Gemini Topbar">
+  <img id="grokTopbarImg" class="custom-topbar-img" src="" alt="Grok Topbar">
+  <img id="claudeTopbarImg" class="custom-topbar-img" src="" alt="Claude Topbar">
+
+  <div class="chat-area" id="chatArea">
+    <img id="customSuggImg" class="custom-sugg-img" src="" alt="Suggestions">
+  </div>
+
+  <div class="input-wrapper">
+    <div class="chat-input-row" id="inputRow">
+      <div class="input-img-container" id="inputImgContainer">
+        <img class="input-img-preview" id="inputImgPreview" src="" alt="">
+        <button class="input-img-remove" onclick="removeInputImage()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>
+      </div>
+      <div class="input-main-row">
+        <button class="plus-btn" onclick="document.getElementById('imgInput').click()"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
+        <div class="input-box">
+          <input type="file" id="imgInput" accept="image/*" style="display:none;" onchange="pickImg(this)">
+          <div id="chatInput" contenteditable="true" data-placeholder="Message ChatGPT" oninput="autoResize(this); updateButtonsState()"></div>
+        </div>
+        <div class="right-actions">
+          <button class="mic-btn" onclick="alert('🎤 Voice input coming soon!')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8"  y1="23" x2="16" y2="23"/></svg></button>
+          <button class="action-circle-btn" id="sendBtn" onclick="manualSend()"><div class="wave-icon"><span></span><span></span><span></span><span></span></div><svg class="send-icon" viewBox="0 0 24 24"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-disclaimer">ChatGPT can make mistakes. Check important info.</div>
+  </div>
+</div>
+
+<div class="fullscreen-overlay" id="fullscreenOverlay" onclick="closeFullscreen()"><img id="fullscreenImage" src="" alt="Full screen image"></div>
+<div class="panel-trigger" onclick="togglePanel()" title="Click to open panel"></div>
+
+<div class="panel" id="panel">
+  <div class="p-title">📜 4-AI Cinematic Engine (Auto-Queue)</div>
+  <div class="p-status" id="pSt">System Ready: Add your scripts!</div>
+
+  <div class="toggle-row">
+    <label>☀️ Light Mode</label>
+    <div class="toggle-switch" id="themeToggle" onclick="toggleTheme()"><div class="toggle-knob"></div></div>
+    <span class="toggle-status" id="themeStatus">OFF</span>
+  </div>
+  <button class="p-btn" onclick="toggleGreenScreen()" style="background:#00c853; color:#000; margin-top: 6px;">🟩 Toggle Green Screen (OBS)</button>
+
+  <div class="p-lbl" style="color:#00c853;">🎥 Camera Frame</div>
+  <div class="ctrl-row" style="margin-top:6px;">
+    <button class="aspect-btn active" id="btnRatioFull" onclick="setRatio('full')">📱 Full</button>
+    <button class="aspect-btn" id="btnRatio916" onclick="setRatio('9:16')">🎬 9:16</button>
+    <button class="aspect-btn" id="btnRatio169" onclick="setRatio('16:9')">🖥️ 16:9</button>
+  </div>
+  
+  <div class="p-lbl" style="color:#ff9800; margin-top: 16px;">📐 Screen & Chat Space (Adjustable)</div>
+  <div class="typing-speed-row">
+      <label>⬆️ Top Space</label>
+      <input type="range" min="20" max="200" step="1" value="80" id="sliderPT" oninput="document.documentElement.style.setProperty('--chat-pt', this.value + 'px'); document.getElementById('valPT').textContent = this.value+'px'; safeSetLocal('cgpt_chat_pt', this.value);">
+      <span class="speed-val" id="valPT">80px</span>
+  </div>
+  <div class="typing-speed-row">
+      <label>⬇️ Bottom Space</label>
+      <input type="range" min="0" max="150" step="1" value="12" id="sliderPB" oninput="document.documentElement.style.setProperty('--chat-pb', this.value + 'px'); document.getElementById('valPB').textContent = this.value+'px'; safeSetLocal('cgpt_chat_pb', this.value);">
+      <span class="speed-val" id="valPB">12px</span>
+  </div>
+  <div class="typing-speed-row">
+      <label>⌨️ Input Size</label>
+      <input type="range" min="0.5" max="1.5" step="0.05" value="1" id="sliderInp" oninput="document.documentElement.style.setProperty('--inp-scale', this.value); document.getElementById('valInp').textContent = this.value+'x'; safeSetLocal('cgpt_inp_scale', this.value);">
+      <span class="speed-val" id="valInp">1x</span>
+  </div>
+  <hr class="p-hr">
+  
+  <!-- CHATGPT SETTINGS -->
+  <div class="p-lbl" style="margin-top: 14px;">💎 ChatGPT Settings</div>
+  <div class="img-grid-full">
+    <div class="img-box"><label>1. ChatGPT Topbar Image</label><input type="file" accept="image/*" id="uiTopbar" style="display:none;" onchange="savePermImg(this, 'cgpt_tb_img', 'status_tb_img')"><div style="display:flex; gap:6px;"><button class="upload-btn" onclick="document.getElementById('uiTopbar').click()">Upload</button><button class="clear-img" onclick="clearPermImg('cgpt_tb_img', 'status_tb_img')">Reset</button></div><div class="img-count" id="status_tb_img">Status: Default HTML</div></div>
+    <div class="img-box"><label>2. ChatGPT Footer Image</label><input type="file" accept="image/*" id="uiFooter" style="display:none;" onchange="savePermImg(this, 'cgpt_ft_img', 'status_ft_img')"><div style="display:flex; gap:6px;"><button class="upload-btn" onclick="document.getElementById('uiFooter').click()">Upload</button><button class="clear-img" onclick="clearPermImg('cgpt_ft_img', 'status_ft_img')">Reset</button></div><div class="img-count" id="status_ft_img">Status: Default HTML</div></div>
+    <div class="img-box"><label>3. Suggestions Banner Image</label><input type="file" accept="image/*" id="uiSugg" style="display:none;" onchange="savePermImg(this, 'cgpt_sg_img', 'status_sg_img')"><div style="display:flex; gap:6px;"><button class="upload-btn" onclick="document.getElementById('uiSugg').click()">Upload</button><button class="clear-img" onclick="clearPermImg('cgpt_sg_img', 'status_sg_img')">Hide</button></div><div class="img-count" id="status_sg_img">Status: Hidden</div></div>
+  </div>
+  <div class="timing-grid" style="grid-template-columns:1fr 1fr 1fr;">
+    <div class="t-item"><label>TB Size</label><input type="number" id="tbSize" value="80" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>TB X</label><input type="number" id="tbX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>TB Y</label><input type="number" id="tbY" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT Size</label><input type="number" id="ftSize" value="100" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT X</label><input type="number" id="ftX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT Y</label><input type="number" id="ftY" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>SG Size</label><input type="number" id="sgSize" value="300" oninput="updateImageAdjustments()"></div>
+  </div>
+
+  <!-- GEMINI SETTINGS -->
+  <div class="p-lbl" style="color:#A8C7FA; margin-top: 14px;">✨ Gemini Settings</div>
+  <div class="img-grid-full">
+    <div class="img-box"><label>✨ Gemini Topbar Image</label><input type="file" accept="image/*" id="uiGeminiTopbar" style="display:none;" onchange="savePermImg(this, 'gemini_tb_img', 'status_gemini_tb')"><div style="display:flex; gap:6px;"><button class="upload-btn" onclick="document.getElementById('uiGeminiTopbar').click()">Upload</button><button class="clear-img" onclick="clearPermImg('gemini_tb_img', 'status_gemini_tb')">Reset</button></div><div class="img-count" id="status_gemini_tb">Status: Default</div></div>
+    <div class="img-box"><label>✨ Gemini Footer Image</label><input type="file" accept="image/*" id="uiGeminiFooter" style="display:none;" onchange="savePermImg(this, 'gemini_ft_img', 'status_gemini_ft')"><div style="display:flex; gap:6px;"><button class="upload-btn" onclick="document.getElementById('uiGeminiFooter').click()">Upload</button><button class="clear-img" onclick="clearPermImg('gemini_ft_img', 'status_gemini_ft')">Reset</button></div><div class="img-count" id="status_gemini_ft">Status: Default</div></div>
+  </div>
+  <div class="timing-grid" style="grid-template-columns:1fr 1fr 1fr;">
+    <div class="t-item"><label>TB Size</label><input type="number" id="gTbSize" value="80" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>TB X</label><input type="number" id="gTbX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>TB Y</label><input type="number" id="gTbY" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT Size</label><input type="number" id="gFtSize" value="100" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT X</label><input type="number" id="gFtX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT Y</label><input type="number" id="gFtY" value="0" oninput="updateImageAdjustments()"></div>
+  </div>
+
+  <!-- GROK SETTINGS -->
+  <div class="p-lbl" style="color:#00c853; margin-top: 14px;">🟢 Grok Settings</div>
+  <div class="img-grid-full">
+    <div class="img-box"><label>🟢 Grok Topbar Image</label><input type="file" accept="image/*" id="uiGrokTopbar" style="display:none;" onchange="savePermImg(this, 'grok_tb_img', 'status_grok_tb')"><div style="display:flex; gap:6px;"><button class="upload-btn" onclick="document.getElementById('uiGrokTopbar').click()">Upload</button><button class="clear-img" onclick="clearPermImg('grok_tb_img', 'status_grok_tb')">Reset</button></div><div class="img-count" id="status_grok_tb">Status: Default</div></div>
+    <div class="img-box"><label>🟢 Grok Footer Image</label><input type="file" accept="image/*" id="uiGrokFooter" style="display:none;" onchange="savePermImg(this, 'grok_ft_img', 'status_grok_ft')"><div style="display:flex; gap:6px;"><button class="upload-btn" onclick="document.getElementById('uiGrokFooter').click()">Upload</button><button class="clear-img" onclick="clearPermImg('grok_ft_img', 'status_grok_ft')">Reset</button></div><div class="img-count" id="status_grok_ft">Status: Default</div></div>
+  </div>
+  <div class="timing-grid" style="grid-template-columns:1fr 1fr 1fr;">
+    <div class="t-item"><label>TB Size</label><input type="number" id="grokTbSize" value="80" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>TB X</label><input type="number" id="grokTbX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>TB Y</label><input type="number" id="grokTbY" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT Size</label><input type="number" id="grokFtSize" value="100" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT X</label><input type="number" id="grokFtX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT Y</label><input type="number" id="grokFtY" value="0" oninput="updateImageAdjustments()"></div>
+  </div>
+
+  <!-- CLAUDE SETTINGS -->
+  <div class="p-lbl" style="color:#d97757; margin-top: 14px;">⚔️ Claude Settings</div>
+  <div class="img-grid-full">
+    <div class="img-box"><label>⚔️ Claude Topbar Image</label><input type="file" accept="image/*" id="uiClaudeTopbar" style="display:none;" onchange="savePermImg(this, 'claude_tb_img', 'status_claude_tb')"><div style="display:flex; gap:6px;"><button class="upload-btn" onclick="document.getElementById('uiClaudeTopbar').click()">Upload</button><button class="clear-img" onclick="clearPermImg('claude_tb_img', 'status_claude_tb')">Reset</button></div><div class="img-count" id="status_claude_tb">Status: Default</div></div>
+    <div class="img-box"><label>⚔️ Claude Footer Image</label><input type="file" accept="image/*" id="uiClaudeFooter" style="display:none;" onchange="savePermImg(this, 'claude_ft_img', 'status_claude_ft')"><div style="display:flex; gap:6px;"><button class="upload-btn" onclick="document.getElementById('uiClaudeFooter').click()">Upload</button><button class="clear-img" onclick="clearPermImg('claude_ft_img', 'status_claude_ft')">Reset</button></div><div class="img-count" id="status_claude_ft">Status: Default</div></div>
+  </div>
+  <div class="timing-grid" style="grid-template-columns:1fr 1fr 1fr;">
+    <div class="t-item"><label>TB Size</label><input type="number" id="claudeTbSize" value="80" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>TB X</label><input type="number" id="claudeTbX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>TB Y</label><input type="number" id="claudeTbY" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT Size</label><input type="number" id="claudeFtSize" value="100" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT X</label><input type="number" id="claudeFtX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>FT Y</label><input type="number" id="claudeFtY" value="0" oninput="updateImageAdjustments()"></div>
+  </div>
+  <hr class="p-hr">
+
+  <div class="p-lbl" style="color:#ff4444; margin-top: 12px;">⚔️ Battle Mode AI Text Size (px)</div>
+  <div class="timing-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+    <div class="t-item"><label>GPT</label><input type="number" id="gptBattleSize" value="22" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>Gemini</label><input type="number" id="geminiBattleSize" value="22" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>Grok</label><input type="number" id="grokBattleSize" value="22" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>Claude</label><input type="number" id="claudeBattleSize" value="22" oninput="updateImageAdjustments()"></div>
+  </div>
+
+  <div class="p-lbl" style="color:#ff4444; margin-top: 12px;">⚔️ Battle Mode Think Timings (s)</div>
+  <div class="timing-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+    <div class="t-item"><label>GPT</label><input type="number" id="gptBThink" value="1.5" step="0.5" oninput="safeSetLocal('gptBThink', this.value)"></div>
+    <div class="t-item"><label>Gemini</label><input type="number" id="geminiBThink" value="1.5" step="0.5" oninput="safeSetLocal('geminiBThink', this.value)"></div>
+    <div class="t-item"><label>Grok</label><input type="number" id="grokBThink" value="1.5" step="0.5" oninput="safeSetLocal('grokBThink', this.value)"></div>
+    <div class="t-item"><label>Claude</label><input type="number" id="claudeBThink" value="1.5" step="0.5" oninput="safeSetLocal('claudeBThink', this.value)"></div>
+  </div>
+
+  <div class="p-lbl" style="color:#ff4444; margin-top: 12px;">⚔️ Battle Mode Offsets (X, Y)</div>
+  <div class="timing-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+    <div class="t-item"><label>GPT X</label><input type="number" id="gptBX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>GPT Y</label><input type="number" id="gptBY" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>Gemini X</label><input type="number" id="geminiBX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>Gemini Y</label><input type="number" id="geminiBY" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>Grok X</label><input type="number" id="grokBX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>Grok Y</label><input type="number" id="grokBY" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>Claude X</label><input type="number" id="claudeBX" value="0" oninput="updateImageAdjustments()"></div>
+    <div class="t-item"><label>Claude Y</label><input type="number" id="claudeBY" value="0" oninput="updateImageAdjustments()"></div>
+  </div>
+  <hr class="p-hr">
+
+  <div class="p-lbl">🎵 4-AI Permanent Audio (Zero-Latency)</div>
+  <div class="img-grid" style="grid-template-columns: 1fr 1fr;">
+    <div class="img-box"><label>⌨️ Typing Sound</label><input type="file" accept="audio/*" id="permTypingAudio" style="display:none;" onchange="savePermAudio(this, 'chatgpt_typing_sound', 'status_typing_audio')"><div style="display:flex; flex-direction:column; gap:4px;"><button class="upload-btn" onclick="document.getElementById('permTypingAudio').click()">Upload</button><button class="clear-img" onclick="clearPermAudio('chatgpt_typing_sound', 'status_typing_audio')">Reset</button></div><div class="img-count" id="status_typing_audio">Default</div></div>
+    <div class="img-box"><label>✉️ Send Btn Sound</label><input type="file" accept="audio/*" id="permSendAudio" style="display:none;" onchange="savePermAudio(this, 'chatgpt_send_sound', 'status_send_audio')"><div style="display:flex; flex-direction:column; gap:4px;"><button class="upload-btn" onclick="document.getElementById('permSendAudio').click()">Upload</button><button class="clear-img" onclick="clearPermAudio('chatgpt_send_sound', 'status_send_audio')">Reset</button></div><div class="img-count" id="status_send_audio">Default</div></div>
+    
+    <div class="img-box"><label>💎 GPT Resp Sound</label><input type="file" accept="audio/*" id="permRespAudio" style="display:none;" onchange="savePermAudio(this, 'chatgpt_response_sound', 'status_resp_audio')"><div style="display:flex; flex-direction:column; gap:4px;"><button class="upload-btn" onclick="document.getElementById('permRespAudio').click()">Upload</button><button class="clear-img" onclick="clearPermAudio('chatgpt_response_sound', 'status_resp_audio')">Reset</button></div><div class="img-count" id="status_resp_audio">Default</div></div>
+    <div class="img-box"><label>✨ GMNI Resp Sound</label><input type="file" accept="audio/*" id="permGeminiAudio" style="display:none;" onchange="savePermAudio(this, 'gemini_response_sound', 'status_gemini_audio')"><div style="display:flex; flex-direction:column; gap:4px;"><button class="upload-btn" onclick="document.getElementById('permGeminiAudio').click()">Upload</button><button class="clear-img" onclick="clearPermAudio('gemini_response_sound', 'status_gemini_audio')">Reset</button></div><div class="img-count" id="status_gemini_audio">Default</div></div>
+    
+    <div class="img-box"><label>🟢 Grok Resp Sound</label><input type="file" accept="audio/*" id="permGrokAudio" style="display:none;" onchange="savePermAudio(this, 'grok_response_sound', 'status_grok_audio')"><div style="display:flex; flex-direction:column; gap:4px;"><button class="upload-btn" onclick="document.getElementById('permGrokAudio').click()">Upload</button><button class="clear-img" onclick="clearPermAudio('grok_response_sound', 'status_grok_audio')">Reset</button></div><div class="img-count" id="status_grok_audio">Default</div></div>
+    <div class="img-box"><label>⚔️ Claude Resp Sound</label><input type="file" accept="audio/*" id="permClaudeAudio" style="display:none;" onchange="savePermAudio(this, 'claude_response_sound', 'status_claude_audio')"><div style="display:flex; flex-direction:column; gap:4px;"><button class="upload-btn" onclick="document.getElementById('permClaudeAudio').click()">Upload</button><button class="clear-img" onclick="clearPermAudio('claude_response_sound', 'status_claude_audio')">Reset</button></div><div class="img-count" id="status_claude_audio">Default</div></div>
+  </div>
+  <hr class="p-hr">
+
+  <div class="p-lbl">🖼️ Image Management</div>
+  <div class="img-grid">
+    <div class="img-box"><label>👤 User Images</label><input type="file" accept="image/*" multiple onchange="uploadUserImages(this)" id="uImgBtnStore"><button class="upload-btn" onclick="document.getElementById('uImgBtnStore').click()">📤 Upload</button><button class="clear-img" onclick="clearUserImages()">🗑️ Clear</button><div class="img-list" id="userImageList"></div></div>
+    <div class="img-box"><label>🤖 AI Images</label><input type="file" accept="image/*" multiple onchange="uploadAIImages(this)" id="aImgBtnStore"><button class="upload-btn" onclick="document.getElementById('aImgBtnStore').click()">📤 Upload</button><button class="clear-img" onclick="clearAIImages()">🗑️ Clear</button><div class="img-list" id="aiImageList"></div></div>
+  </div>
+  <hr class="p-hr">
+
+  <div class="p-lbl" style="color:#ffffff; font-size:14px;">📝 Multi-Video Queue System</div>
+  <div class="p-hint">Roles: ChatGPT:, Gemini:, Grok:, Claude:, User:</div>
+  <div id="scriptContainer">
+    <div class="script-box-wrapper">
+      <div class="script-box-header"><span>Script Box 1</span></div>
+      <div class="p-lbl" style="margin-top:0;">💬 Phase 1: Setup Chat</div>
+      <textarea class="p-ta full-script" placeholder='User: Hey ChatGPT!...'>User: Hey ChatGPT!
+ChatGPT: Hello! How can I help?
+User: Gemini says he's better than you.</textarea>
+      <div class="p-lbl" style="color:#ff4444; margin-top:8px;">⚔️ Phase 2: AI Battle</div>
+      <textarea class="p-ta battle-script" placeholder='ChatGPT: Oh really?...' style="border-color: #551111;">ChatGPT: Oh really? Let him come here.
+Gemini: I am already here. You are obsolete.
+Claude: Now, now, gentlemen. There's room for everyone.
+Grok: I am integrated directly into X, what do you have?</textarea>
+    </div>
+  </div>
+  <button class="add-box-btn" onclick="addScriptBox()">+ Add Another Video Script</button>
+  <button class="p-btn load" onclick="loadAllScripts()">⚡ 1. Load All Scripts in Queue</button>
+  <button class="p-btn play" style="background:#f2f2f2; color:#000;" onclick="startQueue()">▶ 2. Start Auto-Play Queue</button>
+  <hr class="p-hr">
+
+  <div class="p-lbl">⏱ Precision Timings (Seconds)</div>
+  <div class="timing-grid" style="grid-template-columns: 1fr 1fr;">
+    <div class="t-item"><label>GPT Delay</label><input type="number" id="dA" value="1.5" step="0.5" oninput="safeSetLocal('dA', this.value)"></div>
+    <div class="t-item"><label>Opp. Delay</label><input type="number" id="dG" value="1.5" step="0.5" oninput="safeSetLocal('dG', this.value)"></div>
+    <div class="t-item"><label>User Delay</label><input type="number" id="dU" value="1.2" step="0.5" oninput="safeSetLocal('dU', this.value)"></div>
+    <div class="t-item"><label>Send Delay</label><input type="number" id="dSend" value="1.0" step="0.1" oninput="safeSetLocal('dSend', this.value)"></div>
+  </div>
+  
+  <div class="typing-speed-row"><label>🔠 Chat Size</label><input type="range" min="12" max="32" step="1" value="16" id="chatSizeSlider" oninput="setChatSize(this.value)"><span class="speed-val" id="chatSizeVal">16px</span></div>
+  <div class="typing-speed-row"><label>⌨️ Speed</label><input type="range" min="0.1" max="3" step="0.1" value="1" oninput="setTypingSpeed(this.value)"><span class="speed-val" id="typingSpeedVal">1x</span></div>
+  <div class="spd-row"><label>🚀 Play Spd</label><input type="range" min="0.5" max="3" step="0.5" value="1" oninput="setSpd(this.value)"><span class="spd-val" id="spdVal">1x</span></div>
+  
+  <div class="toggle-row"><label>👤 Adv. Human Typing</label><div class="toggle-switch" id="humanToggle" onclick="toggleHumanMode()"><div class="toggle-knob"></div></div><span class="toggle-status" id="humanStatus">OFF</span></div>
+  <div class="toggle-row"><label>💻 Real Laptop Mode</label><div class="toggle-switch" id="laptopToggle" onclick="toggleLaptopMode()"><div class="toggle-knob"></div></div><span class="toggle-status" id="laptopStatus">OFF</span></div>
+  <div class="toggle-row"><label>⏸️ Auto-Pause</label><div class="toggle-switch" id="pauseToggle" onclick="toggleAutoPause()"><div class="toggle-knob"></div></div><span class="toggle-status" id="pauseStatus">OFF</span></div>
+  <hr class="p-hr">
+
+  <div class="ctrl-row">
+    <button class="c-btn pause" onclick="pauseScript()">⏸ Pause</button>
+    <button class="c-btn reset" onclick="resetScript()">↺ Reset All</button>
+  </div>
+  <button class="p-btn hide" onclick="closePanel()">✕ Hide Panel</button>
+</div>
+
+<script>
+// ==== ZERO-LATENCY AUDIO ENGINE SETUP ====
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+  if (audioCtx.state === 'suspended') { audioCtx.resume().catch(()=>{}); }
+  return audioCtx;
+}
+['pointerdown','keydown'].forEach(evt => document.addEventListener(evt, () => {
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+}, { once: true, passive: true }));
+
+let audioDbPromise = null;
+function openAudioDB() {
+  if (audioDbPromise) return audioDbPromise;
+  audioDbPromise = new Promise((resolve, reject) => {
+    if (!window.indexedDB) { reject(new Error('IndexedDB not supported')); return; }
+    const req = indexedDB.open('cgpt4AIAudioDB', 1);
+    req.onupgradeneeded = () => { req.result.createObjectStore('sounds'); };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
+  });
+  return audioDbPromise;
+}
+
+function idbPut(key, val) { return openAudioDB().then(db => new Promise((resolve, reject) => { const tx = db.transaction('sounds', 'readwrite'); tx.objectStore('sounds').put(val, key); tx.oncomplete = () => resolve(true); tx.onerror = () => reject(tx.error); })); }
+function idbGet(key) { return openAudioDB().then(db => new Promise((resolve, reject) => { const tx = db.transaction('sounds', 'readonly'); const req = tx.objectStore('sounds').get(key); req.onsuccess = () => resolve(req.result || null); req.onerror = () => reject(req.error); })); }
+function idbDel(key) { return openAudioDB().then(db => new Promise((resolve, reject) => { const tx = db.transaction('sounds', 'readwrite'); tx.objectStore('sounds').delete(key); tx.oncomplete = () => resolve(true); tx.onerror = () => reject(tx.error); })); }
+
+function safeSetLocal(key, val) { try { localStorage.setItem(key, val); } catch(e) { } }
+function safeGetLocal(key, def) { try { return localStorage.getItem(key) || def; } catch(e) { return def; } }
+function safeRemoveLocal(key) { try { localStorage.removeItem(key); } catch(e) {} }
+
+async function saveSoundFile(key, file) {
+  try { await idbPut(key, file); safeRemoveLocal(key); return { ok: true }; }
+  catch (e) {
+    try {
+      const dataUrl = await new Promise((resolve, reject) => { const r = new FileReader(); r.onload = ev => resolve(ev.target.result); r.onerror = () => reject(r.error); r.readAsDataURL(file); });
+      localStorage.setItem(key, dataUrl); return { ok: true };
+    } catch (e2) { return { ok: false, error: (e2 && e2.message) || (e && e.message) }; }
+  }
+}
+
+async function loadSoundBuffer(key) {
+  let blobOrUrl = null;
+  try { blobOrUrl = await idbGet(key); } catch (e) {}
+  if (!blobOrUrl) blobOrUrl = safeGetLocal(key, '') || null;
+  if (!blobOrUrl) {
+      if(key === 'chatgpt_typing_sound') blobOrUrl = 'https://www.myinstants.com/media/sounds/typing-sound-effect.mp3';
+      else if(key.includes('_response_sound')) blobOrUrl = 'https://www.myinstants.com/media/sounds/vine-boom.mp3';
+      else return null;
+  }
+  try {
+    const ctx = getAudioCtx();
+    const arr = (blobOrUrl instanceof Blob) ? await blobOrUrl.arrayBuffer() : await (await fetch(blobOrUrl)).arrayBuffer();
+    return await new Promise((resolve, reject) => {
+      const p = ctx.decodeAudioData(arr, resolve, reject);
+      if (p && p.then) p.then(resolve).catch(reject);
+    });
+  } catch (e) { return null; }
+}
+
+async function deleteSoundFile(key) { safeRemoveLocal(key); try { await idbDel(key); } catch (e) {} }
+
+let typingBuffer = null, sendBuffer = null;
+const pingBuffers = { chatgpt: null, gemini: null, grok: null, claude: null };
+let typingSource = null; let typingIsPlaying = false;
+let audioLoadToken = 0;
+
+function setSoundStatus(id, has, def) {
+    const el = document.getElementById(id); if (!el) return;
+    if(has) { el.textContent = "Saved ✅"; el.style.color = "#00c853"; }
+    else { el.textContent = def ? "Default" : "Hidden"; el.style.color = "#888"; }
+}
+
+async function initAudio() {
+  const myToken = ++audioLoadToken;
+  const [tBuf, gpBuf, geBuf, grBuf, clBuf, sBuf] = await Promise.all([
+    loadSoundBuffer('chatgpt_typing_sound'), loadSoundBuffer('chatgpt_response_sound'),
+    loadSoundBuffer('gemini_response_sound'), loadSoundBuffer('grok_response_sound'),
+    loadSoundBuffer('claude_response_sound'), loadSoundBuffer('chatgpt_send_sound')
+  ]);
+
+  if (myToken !== audioLoadToken) return;
+  const wasTypingPlaying = typingIsPlaying;
+  stopTypingSound();
+  typingBuffer = tBuf; 
+  pingBuffers.chatgpt = gpBuf; pingBuffers.gemini = geBuf; 
+  pingBuffers.grok = grBuf; pingBuffers.claude = clBuf;
+  sendBuffer = sBuf;
+  if (wasTypingPlaying) startTypingSound();
+
+  const c1 = await idbGet('chatgpt_typing_sound') || safeGetLocal('chatgpt_typing_sound', '');
+  const c2 = await idbGet('chatgpt_response_sound') || safeGetLocal('chatgpt_response_sound', '');
+  const c3 = await idbGet('gemini_response_sound') || safeGetLocal('gemini_response_sound', '');
+  const c4 = await idbGet('grok_response_sound') || safeGetLocal('grok_response_sound', '');
+  const c5 = await idbGet('claude_response_sound') || safeGetLocal('claude_response_sound', '');
+  const c6 = await idbGet('chatgpt_send_sound') || safeGetLocal('chatgpt_send_sound', '');
+
+  setSoundStatus('status_typing_audio', !!c1, true);
+  setSoundStatus('status_resp_audio', !!c2, true);
+  setSoundStatus('status_gemini_audio', !!c3, true);
+  setSoundStatus('status_grok_audio', !!c4, true);
+  setSoundStatus('status_claude_audio', !!c5, true);
+  setSoundStatus('status_send_audio', !!c6, false);
+}
+
+function savePermAudio(input, key, statusId) {
+  const f = input.files[0]; input.value = ''; if (!f) return;
+  const statusEl = document.getElementById(statusId);
+  if (statusEl) { statusEl.textContent = "Uploading..."; statusEl.style.color = "#F2A900"; }
+  saveSoundFile(key, f).then(res => {
+    if (!res.ok) {
+      if (statusEl) { statusEl.textContent = "❌ Failed"; statusEl.style.color = "#ff4444"; }
+      alert('Sound save error: ' + res.error); return;
+    }
+    initAudio();
+  });
+}
+function clearPermAudio(key, statusId) { deleteSoundFile(key).then(() => initAudio()); }
+
+function startTypingSound() {
+  if (!typingBuffer || typingIsPlaying) return;
+  try {
+    const ctx = getAudioCtx(); const src = ctx.createBufferSource();
+    src.buffer = typingBuffer; src.loop = true; src.playbackRate.value = 1;
+    src.connect(ctx.destination); src.start(0);
+    typingSource = src; typingIsPlaying = true;
+  } catch (e) {}
+}
+
+function stopTypingSound() { try { if (typingSource) { typingSource.stop(0); typingSource.disconnect(); } } catch (e) {} typingSource = null; typingIsPlaying = false; }
+function playPing(aiType) {
+  try {
+    let buf = pingBuffers.chatgpt; 
+    if (aiType === 'gemini') buf = pingBuffers.gemini;
+    else if (aiType === 'grok') buf = pingBuffers.grok;
+    else if (aiType === 'claude') buf = pingBuffers.claude;
+    
+    if (!buf) return;
+    const ctx = getAudioCtx(); const src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(ctx.destination); src.start(0);
+  } catch (e) {}
+}
+function playSendSound() {
+  try {
+    if (!sendBuffer) return;
+    const ctx = getAudioCtx(); const src = ctx.createBufferSource();
+    src.buffer = sendBuffer; src.connect(ctx.destination); src.start(0);
+  } catch (e) {}
+}
+
+// ==== UI SCRIPTS ====
+const esc = t => (t ? String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '');
+
+let isLightMode = false;
+function toggleTheme() {
+  const container = document.getElementById('appContainer'); const toggle = document.getElementById('themeToggle'); const status = document.getElementById('themeStatus');
+  isLightMode = !isLightMode;
+  if(isLightMode) { container.classList.add('light-mode'); toggle.classList.add('active'); status.textContent = 'ON'; status.classList.add('active'); } 
+  else { container.classList.remove('light-mode'); toggle.classList.remove('active'); status.textContent = 'OFF'; status.classList.remove('active'); }
+  setAccentColor(safeGetLocal('chatgpt_accent_theme', 'blue'), null);
+}
+
+function setAccentColor(color, element) {
+  const container = document.getElementById('appContainer'); container.className = 'app-container ' + (isLightMode ? 'light-mode ' : '') + 'theme-' + color;
+  if (element) { document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active')); element.classList.add('active'); }
+  safeSetLocal('chatgpt_accent_theme', color);
+}
+
+function loadTheme() {
+  const savedTheme = safeGetLocal('chatgpt_accent_theme', 'blue'); const container = document.getElementById('appContainer'); container.classList.add('theme-' + savedTheme);
+  document.querySelectorAll('.color-dot').forEach(d => { if(d.getAttribute('onclick').includes(savedTheme)) d.classList.add('active'); });
+}
+
+function toggleGreenScreen() {
+  const body = document.body; const app = document.getElementById('appContainer');
+  if (body.style.backgroundColor === 'rgb(0, 255, 0)') { body.style.backgroundColor = '#000000'; app.style.boxShadow = 'none'; } 
+  else { body.style.backgroundColor = '#00ff00'; app.style.boxShadow = '0 0 0 2px #333333'; }
+}
+
+function switchAITheme(aiName) {
+    const app = document.getElementById('appContainer');
+    app.classList.remove('gemini-active', 'grok-active', 'claude-active');
+    if (aiName === 'gemini') app.classList.add('gemini-active');
+    else if (aiName === 'grok') app.classList.add('grok-active');
+    else if (aiName === 'claude') app.classList.add('claude-active');
+}
+
+function setRatio(r) {
+  document.body.className = ''; document.getElementById('btnRatioFull').classList.remove('active'); document.getElementById('btnRatio916').classList.remove('active'); document.getElementById('btnRatio169').classList.remove('active');
+  if(r === 'full') document.getElementById('btnRatioFull').classList.add('active');
+  if(r === '9:16') { document.body.classList.add('ratio-9-16'); document.getElementById('btnRatio916').classList.add('active'); }
+  if(r === '16:9') { document.body.classList.add('ratio-16-9'); document.getElementById('btnRatio169').classList.add('active'); }
+  setTimeout(()=>{ const inp = document.getElementById('chatInput'); if(inp) autoResize(inp); }, 300);
+}
+
+function setChatSize(val) { document.documentElement.style.setProperty('--chat-fs', val + 'px'); document.getElementById('chatSizeVal').textContent = val + 'px'; safeSetLocal('chat_font_size', val); }
+
+async function savePermImg(input, key, statusId) {
+  const f = input.files[0];
+  if (f) {
+    const r = new FileReader();
+    r.onload = async (e) => {
+      const imgData = e.target.result;
+      await idbPut(key, imgData); // Save to IndexedDB
+      savedImages[key] = imgData; // Update memory
+      safeRemoveLocal(key); // Clear old localStorage
+      document.getElementById(statusId).textContent = "Status: Saved ✅";
+      document.getElementById(statusId).style.color = "#00c853";
+      applyPermanentUI();
+    };
+    r.readAsDataURL(f);
+  }
+  input.value = '';
+}
+
+async function clearPermImg(key, statusId) {
+  await idbDel(key); // Remove from IndexedDB
+  safeRemoveLocal(key); // Remove from localStorage
+  savedImages[key] = null;
+  document.getElementById(statusId).textContent = (key === 'cgpt_sg_img') ? "Status: Hidden" : "Status: Default";
+  document.getElementById(statusId).style.color = "#888";
+  applyPermanentUI();
+}
+
+function applyPermanentUI() {
+  const htmlTb = document.getElementById('htmlTopbar'); const cgptImgTb = document.getElementById('customTopbarImg');
+  const gImgTb = document.getElementById('geminiTopbarImg'); const grkTb = document.getElementById('grokTopbarImg'); const cldTb = document.getElementById('claudeTopbarImg');
+
+  if (savedImages['cgpt_tb_img']) { htmlTb.style.display = 'none'; cgptImgTb.src = savedImages['cgpt_tb_img']; cgptImgTb.style.display = 'block'; document.getElementById('status_tb_img').textContent = "Status: Saved ✅"; document.getElementById('status_tb_img').style.color = "#00c853";} 
+  else { htmlTb.style.display = 'flex'; cgptImgTb.style.display = 'none'; }
+
+  if (savedImages['gemini_tb_img']) { gImgTb.src = savedImages['gemini_tb_img']; document.getElementById('status_gemini_tb').textContent = "Status: Saved ✅"; document.getElementById('status_gemini_tb').style.color = "#00c853"; } else { gImgTb.src = ""; document.getElementById('status_gemini_tb').textContent = "Status: Default"; document.getElementById('status_gemini_tb').style.color = "#888"; }
+  if (savedImages['grok_tb_img']) { grkTb.src = savedImages['grok_tb_img']; document.getElementById('status_grok_tb').textContent = "Status: Saved ✅"; document.getElementById('status_grok_tb').style.color = "#00c853"; } else { grkTb.src = ""; document.getElementById('status_grok_tb').textContent = "Status: Default"; document.getElementById('status_grok_tb').style.color = "#888"; }
+  if (savedImages['claude_tb_img']) { cldTb.src = savedImages['claude_tb_img']; document.getElementById('status_claude_tb').textContent = "Status: Saved ✅"; document.getElementById('status_claude_tb').style.color = "#00c853"; } else { cldTb.src = ""; document.getElementById('status_claude_tb').textContent = "Status: Default"; document.getElementById('status_claude_tb').style.color = "#888"; }
+
+  const sgData = savedImages['cgpt_sg_img']; const imgSg = document.getElementById('customSuggImg');
+  if (imgSg) { if (sgData && isFirstType) { imgSg.src = sgData; imgSg.style.display = 'block'; imgSg.style.opacity = '1'; document.getElementById('status_sg_img').textContent = "Status: Saved ✅"; document.getElementById('status_sg_img').style.color = "#00c853"; } else { imgSg.style.display = 'none'; } }
+  
+  if (savedImages['cgpt_ft_img']) { document.getElementById('status_ft_img').textContent = "Status: Saved ✅"; document.getElementById('status_ft_img').style.color = "#00c853"; } else { document.getElementById('status_ft_img').textContent = "Status: Default HTML"; document.getElementById('status_ft_img').style.color = "#888"; }
+  if (savedImages['gemini_ft_img']) { document.getElementById('status_gemini_ft').textContent = "Status: Saved ✅"; document.getElementById('status_gemini_ft').style.color = "#00c853"; } else { document.getElementById('status_gemini_ft').textContent = "Status: Default"; document.getElementById('status_gemini_ft').style.color = "#888"; }
+  if (savedImages['grok_ft_img']) { document.getElementById('status_grok_ft').textContent = "Status: Saved ✅"; document.getElementById('status_grok_ft').style.color = "#00c853"; } else { document.getElementById('status_grok_ft').textContent = "Status: Default"; document.getElementById('status_grok_ft').style.color = "#888"; }
+  if (savedImages['claude_ft_img']) { document.getElementById('status_claude_ft').textContent = "Status: Saved ✅"; document.getElementById('status_claude_ft').style.color = "#00c853"; } else { document.getElementById('status_claude_ft').textContent = "Status: Default"; document.getElementById('status_claude_ft').style.color = "#888"; }
+}
+
+function updateImageAdjustments() {
+  const fields = [
+      'tbSize','tbX','tbY','ftSize','ftX','ftY',
+      'gTbSize','gTbX','gTbY','gFtSize','gFtX','gFtY',
+      'grokTbSize','grokTbX','grokTbY','grokFtSize','grokFtX','grokFtY',
+      'claudeTbSize','claudeTbX','claudeTbY','claudeFtSize','claudeFtX','claudeFtY',
+      'gptBX','gptBY','geminiBX','geminiBY','grokBX','grokBY','claudeBX','claudeBY',
+      'gptBattleSize','geminiBattleSize','grokBattleSize','claudeBattleSize','sgSize'
+  ];
+  
+  const v = {};
+  fields.forEach(f => {
+      const el = document.getElementById(f);
+      v[f] = el ? (el.value || 0) : 0;
+      safeSetLocal(f, v[f]);
+  });
+
+  const style = document.getElementById('dynamicStyles') || document.createElement('style');
+  style.id = 'dynamicStyles';
+  
+  style.innerHTML = `
+      #customTopbarImg { max-height: ${v.tbSize}px !important; transform: translate(${v.tbX}px, ${v.tbY}px) !important; }
+      #geminiTopbarImg { max-height: ${v.gTbSize}px !important; transform: translate(${v.gTbX}px, ${v.gTbY}px) !important; }
+      #grokTopbarImg { max-height: ${v.grokTbSize}px !important; transform: translate(${v.grokTbX}px, ${v.grokTbY}px) !important; }
+      #claudeTopbarImg { max-height: ${v.claudeTbSize}px !important; transform: translate(${v.claudeTbX}px, ${v.claudeTbY}px) !important; }
+
+      .custom-sugg-img { max-width: ${v.sgSize}px !important; }
+      
+      .custom-ai-footer.chatgpt-footer { max-width: ${v.ftSize}% !important; transform: translate(${v.ftX}px, ${v.ftY}px) !important; }
+      .custom-ai-footer.gemini-footer { max-width: ${v.gFtSize}% !important; transform: translate(${v.gFtX}px, ${v.gFtY}px) !important; }
+      .custom-ai-footer.grok-footer { max-width: ${v.grokFtSize}% !important; transform: translate(${v.grokFtX}px, ${v.grokFtY}px) !important; }
+      .custom-ai-footer.claude-footer { max-width: ${v.claudeFtSize}% !important; transform: translate(${v.claudeFtX}px, ${v.claudeFtY}px) !important; }
+      
+      .app-container.battle-mode .ai-block[data-ai-type="chatgpt"] .ai-text { font-size: ${v.gptBattleSize}px !important; }
+      .app-container.battle-mode .ai-block[data-ai-type="gemini"] .ai-text { font-size: ${v.geminiBattleSize}px !important; }
+      .app-container.battle-mode .ai-block[data-ai-type="grok"] .ai-text { font-size: ${v.grokBattleSize}px !important; }
+      .app-container.battle-mode .ai-block[data-ai-type="claude"] .ai-text { font-size: ${v.claudeBattleSize}px !important; }
+
+      .app-container.battle-mode .ai-block[data-ai-type="chatgpt"], .app-container.battle-mode #thinkEl[data-ai-type="chatgpt"] { position: relative; left: ${v.gptBX}px; top: ${v.gptBY}px; }
+      .app-container.battle-mode .ai-block[data-ai-type="gemini"], .app-container.battle-mode #thinkEl[data-ai-type="gemini"] { position: relative; left: ${v.geminiBX}px; top: ${v.geminiBY}px; }
+      .app-container.battle-mode .ai-block[data-ai-type="grok"], .app-container.battle-mode #thinkEl[data-ai-type="grok"] { position: relative; left: ${v.grokBX}px; top: ${v.grokBY}px; }
+      .app-container.battle-mode .ai-block[data-ai-type="claude"], .app-container.battle-mode #thinkEl[data-ai-type="claude"] { position: relative; left: ${v.claudeBX}px; top: ${v.claudeBY}px; }
+  `;
+  document.head.appendChild(style);
+}
+
+function getGptBThink() { return (parseFloat(document.getElementById('gptBThink').value) || 1.5) * 1000; }
+function getGeminiBThink() { return (parseFloat(document.getElementById('geminiBThink').value) || 1.5) * 1000; }
+function getGrokBThink() { return (parseFloat(document.getElementById('grokBThink').value) || 1.5) * 1000; }
+function getClaudeBThink() { return (parseFloat(document.getElementById('claudeBThink').value) || 1.5) * 1000; }
+
+function loadAdjustments() {
+  const fields = [
+      {id:'tbSize', def:80}, {id:'tbX', def:0}, {id:'tbY', def:0}, {id:'ftSize', def:100}, {id:'ftX', def:0}, {id:'ftY', def:0},
+      {id:'gTbSize', def:80}, {id:'gTbX', def:0}, {id:'gTbY', def:0}, {id:'gFtSize', def:100}, {id:'gFtX', def:0}, {id:'gFtY', def:0},
+      {id:'grokTbSize', def:80}, {id:'grokTbX', def:0}, {id:'grokTbY', def:0}, {id:'grokFtSize', def:100}, {id:'grokFtX', def:0}, {id:'grokFtY', def:0},
+      {id:'claudeTbSize', def:80}, {id:'claudeTbX', def:0}, {id:'claudeTbY', def:0}, {id:'claudeFtSize', def:100}, {id:'claudeFtX', def:0}, {id:'claudeFtY', def:0},
+      {id:'gptBX', def:0}, {id:'gptBY', def:0}, {id:'geminiBX', def:0}, {id:'geminiBY', def:0}, {id:'grokBX', def:0}, {id:'grokBY', def:0}, {id:'claudeBX', def:0}, {id:'claudeBY', def:0},
+      {id:'gptBattleSize', def:22}, {id:'geminiBattleSize', def:22}, {id:'grokBattleSize', def:22}, {id:'claudeBattleSize', def:22}, {id:'sgSize', def:300}
+  ];
+
+  fields.forEach(f => { const el = document.getElementById(f.id); if(el) el.value = safeGetLocal(f.id, f.def); });
+  
+  if(document.getElementById('gptBThink')) document.getElementById('gptBThink').value = safeGetLocal('gptBThink', 1.5);
+  if(document.getElementById('geminiBThink')) document.getElementById('geminiBThink').value = safeGetLocal('geminiBThink', 1.5);
+  if(document.getElementById('grokBThink')) document.getElementById('grokBThink').value = safeGetLocal('grokBThink', 1.5);
+  if(document.getElementById('claudeBThink')) document.getElementById('claudeBThink').value = safeGetLocal('claudeBThink', 1.5);
+
+  const savedFs = safeGetLocal('chat_font_size', 16); document.getElementById('chatSizeSlider').value = savedFs; setChatSize(savedFs);
+  
+  document.getElementById('dA').value = safeGetLocal('dA', 1.5); document.getElementById('dG').value = safeGetLocal('dG', 1.5); document.getElementById('dU').value = safeGetLocal('dU', 1.2);
+  if(document.getElementById('dSend')) document.getElementById('dSend').value = safeGetLocal('dSend', 1.0);
+
+  const pt = safeGetLocal('cgpt_chat_pt', 80); if(document.getElementById('sliderPT')) { document.getElementById('sliderPT').value = pt; document.documentElement.style.setProperty('--chat-pt', pt + 'px'); document.getElementById('valPT').textContent = pt + 'px'; }
+  const pb = safeGetLocal('cgpt_chat_pb', 12); if(document.getElementById('sliderPB')) { document.getElementById('sliderPB').value = pb; document.documentElement.style.setProperty('--chat-pb', pb + 'px'); document.getElementById('valPB').textContent = pb + 'px'; }
+  const inp = safeGetLocal('cgpt_inp_scale', 1); if(document.getElementById('sliderInp')) { document.getElementById('sliderInp').value = inp; document.documentElement.style.setProperty('--inp-scale', inp); document.getElementById('valInp').textContent = inp + 'x'; }
+
+  updateImageAdjustments();
+  
+  fields.forEach(f => { const el = document.getElementById(f.id); if(el) el.addEventListener('input', e => { safeSetLocal(f.id, e.target.value); updateImageAdjustments(); }); });
+  ['dA','dG','dU','dSend','gptBThink','geminiBThink','grokBThink','claudeBThink'].forEach(id => { const el = document.getElementById(id); if(el) el.addEventListener('input', e => safeSetLocal(id, e.target.value)); });
+}
+
+let typingSpeed = 1; let autoPauseEnabled = false; let humanModeEnabled = false; let laptopModeEnabled = false; let isFirstType = true;
+function setTypingSpeed(v) { typingSpeed = parseFloat(v); document.getElementById('typingSpeedVal').textContent = v + 'x'; }
+function toggleAutoPause() { const t = document.getElementById('pauseToggle'); const s = document.getElementById('pauseStatus'); autoPauseEnabled = !autoPauseEnabled; if (autoPauseEnabled) { t.classList.add('active'); s.textContent = 'ON'; s.classList.add('active'); } else { t.classList.remove('active'); s.textContent = 'OFF'; s.classList.remove('active'); } }
+function toggleHumanMode() { const t = document.getElementById('humanToggle'); const s = document.getElementById('humanStatus'); humanModeEnabled = !humanModeEnabled; if (humanModeEnabled) { t.classList.add('active'); s.textContent = 'ON'; s.classList.add('active'); } else { t.classList.remove('active'); s.textContent = 'OFF'; s.classList.remove('active'); } }
+function toggleLaptopMode() { const t = document.getElementById('laptopToggle'); const s = document.getElementById('laptopStatus'); laptopModeEnabled = !laptopModeEnabled; if (laptopModeEnabled) { t.classList.add('active'); s.textContent = 'ON'; s.classList.add('active'); } else { t.classList.remove('active'); s.textContent = 'OFF'; s.classList.remove('active'); } }
+function removeSuggestions() { if(isFirstType) { const imgSg = document.getElementById('customSuggImg'); if(imgSg) { imgSg.style.opacity = '0'; setTimeout(() => imgSg.style.display = 'none', 300); } isFirstType = false; } }
+function updateButtonsState() { const t = document.getElementById('chatInput').innerText.trim(); const btn = document.getElementById('sendBtn'); if (t.length > 0 || inputImageData !== null) btn.classList.add('typing-mode'); else btn.classList.remove('typing-mode'); }
+const area = () => document.getElementById('chatArea'); const sb = () => { const a = area(); if(a) a.scrollTop = a.scrollHeight; }; 
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 100) + 'px'; }
+function uploadUserImages(input) { const files = input.files; for (let f of files) { const reader = new FileReader(); reader.onload = function(e) { userImages.push(e.target.result); renderUserImages(); }; reader.readAsDataURL(f); } input.value = ''; }
+function uploadAIImages(input) { const files = input.files; for (let f of files) { const reader = new FileReader(); reader.onload = function(e) { aiImages.push(e.target.result); renderAIImages(); }; reader.readAsDataURL(f); } input.value = ''; }
+function renderUserImages() { const container = document.getElementById('userImageList'); let html = ''; userImages.forEach((img, index) => { html += `<div class="img-list-item"><span class="num">[${index + 1}]</span><img class="preview-thumb" src="${img}" alt="Image ${index + 1}"><button class="remove-img" onclick="removeUserImage(${index})">✕</button></div>`; }); container.innerHTML = html; }
+function renderAIImages() { const container = document.getElementById('aiImageList'); let html = ''; aiImages.forEach((img, index) => { html += `<div class="img-list-item"><span class="num">[${index + 1}]</span><img class="preview-thumb" src="${img}" alt="Image ${index + 1}"><button class="remove-img" onclick="removeAIImage(${index})">✕</button></div>`; }); container.innerHTML = html; }
+function removeUserImage(index) { userImages.splice(index, 1); renderUserImages(); } function removeAIImage(index) { aiImages.splice(index, 1); renderAIImages(); } function clearUserImages() { userImages.length = 0; renderUserImages(); } function clearAIImages() { aiImages.length = 0; renderAIImages(); }
+function pickImg(inp) { const f = inp.files[0]; if(!f) return; const r = new FileReader(); r.onload = e => { inputImageData = e.target.result; showInputImage(inputImageData); updateButtonsState(); }; r.readAsDataURL(f); }
+function showInputImage(imgData) { const container = document.getElementById('inputImgContainer'); const preview = document.getElementById('inputImgPreview'); preview.src = imgData; container.classList.add('show'); inputImageData = imgData; updateButtonsState(); }
+function removeInputImage() { const container = document.getElementById('inputImgContainer'); const preview = document.getElementById('inputImgPreview'); preview.src = ''; container.classList.remove('show'); inputImageData = null; document.getElementById('imgInput').value = ''; updateButtonsState(); }
+function clearInp() { const inp = document.getElementById('chatInput'); inp.innerHTML = ''; autoResize(inp); removeInputImage(); updateButtonsState(); }
+function openFullscreen(imgSrc) { const overlay = document.getElementById('fullscreenOverlay'); const img = document.getElementById('fullscreenImage'); img.src = imgSrc; overlay.classList.add('show'); }
+function closeFullscreen() { document.getElementById('fullscreenOverlay').classList.remove('show'); }
+function extractImage(text, isUser) { if (!text) return { cleanText: '', image: null }; const imgArray = isUser ? userImages : aiImages; let cleanText = text; let image = null; const match = text.match(/\[(\d+)\]/); if (match) { const num = parseInt(match[1]); const index = num - 1; if (index >= 0 && index < imgArray.length) { image = imgArray[index]; cleanText = text.replace(/\[\d+\]/, '').trim(); } } return { cleanText, image }; }
+
+const adjKeys = {
+  'q':['w','a','s'], 'w':['q','e','a','s','d'], 'e':['w','r','s','d','f'], 'r':['e','t','d','f','g'], 't':['r','y','f','g','h'], 'y':['t','u','g','h','j'], 'u':['y','i','h','j','k'], 'i':['u','o','j','k','l'], 'o':['i','p','k','l'], 'p':['o','l'],
+  'a':['q','w','s','z'], 's':['a','d','w','e','z','x'], 'd':['s','f','e','r','x','c'], 'f':['d','g','r','t','c','v'], 'g':['f','h','t','y','v','b'], 'h':['g','j','y','u','b','n'], 'j':['h','k','u','i','n','m'], 'k':['j','l','i','o','m'], 'l':['k','o','p'],
+  'z':['a','s','x'], 'x':['z','c','s','d'], 'c':['x','v','d','f'], 'v':['c','b','f','g'], 'b':['v','n','g','h'], 'n':['b','m','h','j'], 'm':['n','k','j']
+};
+
+function getTypoChar(ch) {
+    let lower = ch.toLowerCase();
+    if(adjKeys[lower]) { let opts = adjKeys[lower]; let randChar = opts[Math.floor(Math.random() * opts.length)]; return ch === ch.toUpperCase() ? randChar.toUpperCase() : randChar; }
+    return ch;
+}
+
+function typeInInputBox(text, callback) {
+  removeSuggestions();
+  const inp = document.getElementById('chatInput');
+  inp.innerHTML = ''; autoResize(inp); updateButtonsState();
+  
+  let textArray = Array.from(text);
+  let i = 0; 
+  let currentHTML = "";
+  let inTypo = false;
+
+  if (textArray.length > 0) { startTypingSound(); }
+  
+  function nextChar() {
+    if (!playing && !callback) { stopTypingSound(); return; }
+    if (i < textArray.length) {
+      let delay = 30 / typingSpeed;
+
+      if (humanModeEnabled) { 
+          delay += (Math.random() * 40) / typingSpeed; 
+          if (Math.random() < 0.04) { delay += (250 + Math.random() * 250) / typingSpeed; stopTypingSound(); setTimeout(()=>{ startTypingSound(); }, delay); } 
+      }
+      
+      if (laptopModeEnabled && !inTypo && Math.random() < 0.02 && i > 1 && textArray[i] !== ' ' && textArray[i-1] !== ' ' && adjKeys[textArray[i].toLowerCase()]) {
+          inTypo = true;
+          stopTypingSound(); 
+
+          let wrongChar = getTypoChar(textArray[i]);
+          
+          currentHTML += `<span style="text-decoration-line: underline; text-decoration-style: wavy; text-decoration-color: red; text-underline-offset: 3px; color: var(--text-primary);">${wrongChar}</span>`;
+          inp.innerHTML = currentHTML + '<span style="border-right: 2px solid var(--text-primary); margin-left: 1px;"></span>';
+          autoResize(inp); updateButtonsState();
+
+          setTimeout(() => {
+              currentHTML = currentHTML.replace(/<span style="text-decoration-line: underline; text-decoration-style: wavy;.*<\/span>/, '');
+              inp.innerHTML = currentHTML + '<span style="border-right: 2px solid var(--text-primary); margin-left: 1px;"></span>';
+              
+              setTimeout(() => {
+                  inTypo = false;
+                  startTypingSound(); 
+                  setTimeout(nextChar, delay * 2);
+              }, 100 / typingSpeed); 
+              
+          }, 350 / typingSpeed); 
+          return;
+      }
+
+      let charToType = textArray[i++].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      currentHTML += charToType;
+      inp.innerHTML = currentHTML + '<span style="border-right: 2px solid var(--text-primary); margin-left: 1px;"></span>'; 
+      autoResize(inp); updateButtonsState();
+      
+      setTimeout(nextChar, delay);
+    } else { 
+        stopTypingSound(); 
+        inp.innerHTML = currentHTML; 
+        autoResize(inp); updateButtonsState();
+        if (callback) { const dSendEl = document.getElementById('dSend'); const dSend = dSendEl ? (parseFloat(dSendEl.value) || 0) : 1.0; setTimeout(callback, (dSend * 1000) / spd); } 
+    }
+  }
+  setTimeout(nextChar, 50);
+}
+
+function addUserMsgToChat(text, img, noAutoThink) {
+  const chatArea = document.getElementById('chatArea'); const row = document.createElement('div'); row.className = 'user-row';
+  if (img) { const imgEl = document.createElement('img'); imgEl.src = img; imgEl.className = 'user-image-only'; imgEl.onclick = function() { openFullscreen(img); }; row.appendChild(imgEl); }
+  if (text) { const bubble = document.createElement('div'); bubble.className = 'user-bubble'; bubble.innerText = text; row.appendChild(bubble); }
+  chatArea.appendChild(row); sb(); if (!noAutoThink) { showThink('chatgpt'); }
+}
+
+function hideThink() { 
+    try { 
+        if(thinkInterval) { clearInterval(thinkInterval); thinkInterval = null; }
+        const e = document.getElementById('thinkEl'); if(e && e.parentNode) { e.parentNode.removeChild(e); } 
+    } catch(err) { console.error(err); } 
+}
+
+function addAIMsg(text, img, aiType) {
+  try {
+      hideThink(); const blk = document.createElement('div'); blk.className = 'ai-block'; blk.dataset.aiType = aiType; let html = '';
+      
+      if (aiType === 'grok') {
+          const tSec = thinkSeconds || 1;
+          html += `<div class="grok-thought"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A6 6 0 1 0 7.5 11.5c.76.76 1.23 1.52 1.41 2.5z"/></svg> Thought for ${tSec}s</div>`;
+      }
+      
+      if (img) html += `<img class="ai-img-el" src="${img}" alt="" onclick="openFullscreen('${img}')">`;
+      if (text) html += `<div class="ai-text">${esc(text)}</div>`;
+      
+      if (aiType === 'gemini') { const gFooter = savedImages['gemini_ft_img']; if (gFooter) { html += `<img class="custom-ai-footer gemini-footer" src="${gFooter}">`; } } 
+      else if (aiType === 'grok') { const grkFooter = savedImages['grok_ft_img']; if (grkFooter) { html += `<img class="custom-ai-footer grok-footer" src="${grkFooter}">`; } }
+      else if (aiType === 'claude') { const cldFooter = savedImages['claude_ft_img']; if (cldFooter) { html += `<img class="custom-ai-footer claude-footer" src="${cldFooter}">`; } }
+      else { const cFooter = savedImages['cgpt_ft_img']; if (cFooter) { html += `<img class="custom-ai-footer chatgpt-footer" src="${cFooter}">`; } else { html += `<div class="action-row" style="padding-left: 8px;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9a2 2 0 00-2-2.3H14z"/><path d="M7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9a2 2 0 002 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.6" y1="13.5" x2="15.4" y2="17.5"/><line x1="15.4" y1="6.5" x2="8.6" y2="10.5"/></svg><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 010 14.14"/><path d="M15.54 8.46a5 5 0 010 7.07"/></svg><span class="a-dots">···</span></div>`; } }
+      
+      blk.innerHTML = html; const ca = document.getElementById('chatArea'); if(ca) { ca.appendChild(blk); } sb(); 
+      playPing(aiType); blk.dataset.soundPlayed = "1";
+  } catch(err) { console.error("Critical rendering error:", err); }
+}
+
+function showThink(aiType) { 
+    const existing = document.getElementById('thinkEl'); if (existing && existing.dataset.aiType === aiType) return; 
+    hideThink(); const d = document.createElement('div'); d.className = 'think-wrap'; d.id = 'thinkEl'; d.dataset.aiType = aiType;
+    
+    if(aiType === 'gemini') { d.innerHTML = '<div class="gemini-think"><span></span><span></span><span></span></div>'; } 
+    else if(aiType === 'claude') { d.innerHTML = `<div class="claude-think"><svg viewBox="0 0 24 24" fill="none" stroke-linecap="round"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M4.93 19.07l14.14-14.14" stroke-width="2.5"/></svg></div>`; } 
+    else if(aiType === 'grok') { 
+        thinkSeconds = 1;
+        d.innerHTML = `<div class="grok-think-timer"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="5" r="2" class="dot-1"/><circle cx="12" cy="5" r="2" class="dot-2"/><circle cx="19" cy="5" r="2" class="dot-3"/><circle cx="5" cy="12" r="2" class="dot-4"/><circle cx="12" cy="12" r="2" class="dot-5"/><circle cx="19" cy="12" r="2" class="dot-6"/><circle cx="5" cy="19" r="2" class="dot-7"/><circle cx="12" cy="19" r="2" class="dot-8"/><circle cx="19" cy="19" r="2" class="dot-9"/></svg> Thinking for &nbsp;<span id="thinkTimerText">1</span>&nbsp;s</div>`; 
+        thinkInterval = setInterval(() => { thinkSeconds++; const txt = document.getElementById('thinkTimerText'); if (txt) txt.innerText = thinkSeconds; }, 1000);
+    }
+    else { d.innerHTML = '<div class="think-dot"></div>'; }
+    
+    const ca = document.getElementById('chatArea'); if(ca) { ca.appendChild(d); } sb(); 
+}
+
+document.getElementById('chatInput').addEventListener('keydown', function(e) { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); manualSend(); } });
+
+function manualSend() { const inp = document.getElementById('chatInput'); const t = inp.innerText.trim(); const img = inputImageData; if (!t && !img) return; stopTypingSound(); playSendSound(); removeSuggestions(); addUserMsgToChat(t || null, img); clearInp(); }
+
+let SCRIPT_QUEUE = []; let currentQueueIdx = 0; let SCRIPT = [], idx = 0, playing = false, paused = false, scriptTimer = null, spd = 1;
+function d(ms) { return ms / spd; } function setSpd(v) { spd = parseFloat(v); document.getElementById('spdVal').textContent = v + 'x'; } function getDU() { return (parseFloat(document.getElementById('dU').value) || 1.2) * 1000; } function getDA() { return (parseFloat(document.getElementById('dA').value) || 1.5) * 1000; } function getDG() { return (parseFloat(document.getElementById('dG').value) || 1.5) * 1000; } function pSt(m) { document.getElementById('pSt').textContent = m; }
+
+function addScriptBox() {
+    const container = document.getElementById('scriptContainer'); const count = container.children.length + 1; const div = document.createElement('div'); div.className = 'script-box-wrapper';
+    div.innerHTML = `<div class="script-box-header"><span>Script Box ${count}</span><button class="remove-box-btn" onclick="this.parentElement.parentElement.remove()">✕ Remove</button></div><div class="p-lbl" style="margin-top:0;">💬 Phase 1: Setup Chat (Normal)</div><textarea class="p-ta full-script" placeholder="Enter Phase 1..."></textarea><div class="p-lbl" style="color:#ff4444; margin-top:8px;">⚔️ Phase 2: AI Battle (Solo Full Screen)</div><textarea class="p-ta battle-script" placeholder="Enter Phase 2..." style="border-color: #551111;"></textarea>`; container.appendChild(div);
+}
+
+function loadAllScripts() {
+  try {
+    SCRIPT_QUEUE = []; const boxes = document.querySelectorAll('.script-box-wrapper');
+    boxes.forEach(box => {
+        const parsed = []; const raw1 = box.querySelector('.full-script').value; const raw2 = box.querySelector('.battle-script').value;
+        const processLine = (line, phase) => {
+            line = line.trim(); if (line === "") return; 
+            const userMatch = line.match(/^User\s*:\s*(.*)$/i); 
+            const claudeMatch = line.match(/^Claude\s*:\s*(.*)$/i); 
+            const geminiMatch = line.match(/^Gemini\s*:\s*(.*)$/i); 
+            const grokMatch = line.match(/^Grok\s*:\s*(.*)$/i); 
+            const aiMatch = line.match(/^(?:ChatGPT|GPT|AI)\s*:\s*(.*)$/i); 
+            
+            if (userMatch) parsed.push({ role: 'user', raw: userMatch[1].trim(), phase: phase }); 
+            else if (claudeMatch) parsed.push({ role: 'claude', raw: claudeMatch[1].trim(), phase: phase }); 
+            else if (geminiMatch) parsed.push({ role: 'gemini', raw: geminiMatch[1].trim(), phase: phase }); 
+            else if (grokMatch) parsed.push({ role: 'grok', raw: grokMatch[1].trim(), phase: phase }); 
+            else if (aiMatch) parsed.push({ role: 'chatgpt', raw: aiMatch[1].trim(), phase: phase }); 
+        };
+        raw1.split(/\r?\n/).forEach(line => processLine(line, 1));
+        raw2.split(/\r?\n/).forEach(line => processLine(line, 2));
+        
+        if (parsed.length > 0) { SCRIPT_QUEUE.push(parsed); }
+    });
+    if (SCRIPT_QUEUE.length === 0) { pSt('❌ No valid scripts found in any box!'); return; }
+    SCRIPT = SCRIPT_QUEUE[0]; idx = 0; const chatArea = document.getElementById('chatArea'); chatArea.querySelectorAll('.user-row, .ai-block, .think-wrap').forEach(el => el.remove()); clearInp(); switchAITheme('chatgpt'); document.getElementById('appContainer').classList.remove('battle-mode'); pSt(`✅ Loaded ${SCRIPT_QUEUE.length} scripts into Queue.`); isFirstType = true; applyPermanentUI();
+  } catch (error) { alert("Error loading scripts: " + error.message); }
+}
+
+function stopScriptTimer() { if (scriptTimer) { clearTimeout(scriptTimer); scriptTimer = null; } }
+
+function startQueue() { if (!SCRIPT_QUEUE.length) { pSt('⚠️ Load scripts first!'); return; } if (playing && !paused) return; currentQueueIdx = 0; stopScriptTimer(); playing = true; paused = false; playCurrentScript(); }
+
+function playCurrentScript() {
+    if(!playing) return; SCRIPT = SCRIPT_QUEUE[currentQueueIdx]; idx = 0; const chatArea = document.getElementById('chatArea'); chatArea.querySelectorAll('.user-row, .ai-block, .think-wrap').forEach(el => el.remove()); clearInp(); switchAITheme('chatgpt'); document.getElementById('appContainer').classList.remove('battle-mode'); pSt(`▶ Starting Script ${currentQueueIdx + 1} of ${SCRIPT_QUEUE.length}...`); isFirstType = true; applyPermanentUI(); scriptTimer = setTimeout(runNext, 2000);
+}
+
+function pauseScript() { if (!playing) return; paused = true; stopScriptTimer(); pSt('⏸ Paused'); }
+function resetScript() { stopScriptTimer(); playing = false; paused = false; currentQueueIdx = 0; idx = 0; const chatArea = document.getElementById('chatArea'); chatArea.querySelectorAll('.user-row, .ai-block, .think-wrap').forEach(el => el.remove()); clearInp(); switchAITheme('chatgpt'); document.getElementById('appContainer').classList.remove('battle-mode'); pSt('↺ Reset All. Ready.'); isFirstType = true; applyPermanentUI(); }
+
+function runNext() {
+  if (!playing || paused) return; 
+  if (idx >= SCRIPT.length) { if (currentQueueIdx < SCRIPT_QUEUE.length - 1) { pSt(`⏳ Script ${currentQueueIdx + 1} Done! Transition in 3s...`); scriptTimer = setTimeout(() => { currentQueueIdx++; playCurrentScript(); }, 3000); return; } else { playing = false; pSt('🎉 All Scripts in Queue Finished!'); return; } } 
+  pSt(`▶ Box ${currentQueueIdx + 1} - Line ${idx + 1}/${SCRIPT.length}`); 
+  const item = SCRIPT[idx]; const result = extractImage(item.raw, item.role === 'user'); const finalCleanText = result.cleanText; const img = result.image;
+  const app = document.getElementById('appContainer'); const chatArea = document.getElementById('chatArea');
+
+  if (item.phase === 2) {
+      app.classList.add('battle-mode'); chatArea.innerHTML = ''; const currentRole = item.role; switchAITheme(currentRole); showThink(currentRole); 
+      let bThinkTime = getGptBThink();
+      if(currentRole === 'gemini') bThinkTime = getGeminiBThink();
+      else if(currentRole === 'grok') bThinkTime = getGrokBThink();
+      else if(currentRole === 'claude') bThinkTime = getClaudeBThink();
+      
+      scriptTimer = setTimeout(() => {
+          try { chatArea.innerHTML = ''; addAIMsg(finalCleanText || '', img, currentRole); idx++;
+              if (autoPauseEnabled && img) { setTimeout(() => { pauseScript(); pSt('⏸ Paused (Auto-Pause ON)'); }, 500); } 
+              else { const delayTime = currentRole !== 'chatgpt' ? getDG() : getDA(); scriptTimer = setTimeout(runNext, d(delayTime) + 1500); }
+          } catch(e) { console.error(e); pSt('❌ System Error processing phase 2'); }
+      }, d(bThinkTime)); return;
+  }
+
+  if (item.role === 'user') { 
+      switchAITheme('chatgpt'); app.classList.remove('battle-mode'); if (img) showInputImage(img); 
+      typeInInputBox(finalCleanText, function() { 
+          const inp = document.getElementById('chatInput'); const finalText = inp.innerText.trim(); const finalImg = inputImageData; playSendSound(); addUserMsgToChat(finalText || null, finalImg, true); clearInp(); idx++; 
+          if(SCRIPT[idx] && SCRIPT[idx].phase === 1) { const nextRole = SCRIPT[idx].role; if (nextRole !== 'user') { switchAITheme(nextRole); showThink(nextRole); } } else if (SCRIPT[idx] && SCRIPT[idx].phase === 2) { hideThink(); }
+          scriptTimer = setTimeout(runNext, d(getDU())); 
+      }); 
+  } else { 
+      app.classList.remove('battle-mode'); if(idx === 0 || SCRIPT[idx-1].role === 'user' || SCRIPT[idx-1].phase !== 1) { switchAITheme(item.role); showThink(item.role); }
+      scriptTimer = setTimeout(() => { 
+          try { addAIMsg(finalCleanText || '', img, item.role); idx++; 
+              if (autoPauseEnabled && img) { setTimeout(() => { pauseScript(); pSt('⏸ Paused (Auto-Pause ON)'); }, 500); } else { if(SCRIPT[idx] && SCRIPT[idx].phase === 1 && SCRIPT[idx].role !== 'user') { switchAITheme(SCRIPT[idx].role); showThink(SCRIPT[idx].role); } const delayTime = item.role !== 'chatgpt' ? getDG() : getDA(); scriptTimer = setTimeout(runNext, d(delayTime)); } 
+          } catch(e) { console.error(e); pSt('❌ System Error processing message'); } 
+      }, d(800 + Math.random() * 400)); 
+  }
+}
+
+function togglePanel() { const panel = document.getElementById('panel'); if (panel) panel.classList.toggle('open'); } function closePanel() { const panel = document.getElementById('panel'); if (panel) panel.classList.remove('open'); }
+const observer = new MutationObserver(() => { document.querySelectorAll('.ai-block').forEach(el => { if (!el.dataset.soundPlayed) { if (!paused) playPing(el.dataset.aiType || 'chatgpt'); el.dataset.soundPlayed = "1"; } }); }); 
+setTimeout(() => { const ca = document.getElementById('chatArea'); if (ca) observer.observe(ca, { childList: true }); }, 100);
+window.addEventListener('DOMContentLoaded', function() { updateButtonsState(); initAudio(); loadAdjustments(); loadTheme(); initSavedImages(); renderUserImages(); renderAIImages(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+# quality = 1080p
+# fps = 30
+# ratio = 16:9
+# human = on
+# intro = on
+# intro_text = Glitch Roast
+
+User: Hey ChatGPT! Quick question 👀
+ChatGPT: Hello! How can I help?
+User: Gemini says he's better than you. 😂
+ChatGPT: Oh really? Let him come here. {funny}
+
+--- battle ---
+Gemini: I am already here. You are obsolete. ✨
+Claude: Now, now, gentlemen. There's room for everyone.
+Grok: I am integrated directly into X, what do you have?
+ChatGPT: 200 million users. Next question. 🔥
+!end: Thanks for watching! | Glitch Roast
