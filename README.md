@@ -79,7 +79,8 @@ Kuch na likho to: file repo me hai to wahi bajti hai, warna system wali. Tumhari
 `# human = on` (likha na ho to bhi on). User ki typing insaan jaisi: har akshar ki speed alag, kabhi akshar galat (paas wali key)
 -> 1-2 akshar aage -> ruk ke mita ke sahi, kabhi poora shabd galat (`teh`, `becuase`, `their`/`there`...) -> laal lehar -> mita ke dobara.
 Comma / full stop par saans, beech me kabhi soch ke rukna, aur rukte hi typing ki awaaz bhi ruk jaati hai.
-Messages ka time bhi har baar alag: ChatGPT ka lamba reply = user zyada der padhta hai phir likhta hai, lamba reply = ChatGPT zyada sochta hai.
+Kabhi-kabhi ungli galat key par (chhote message me bhi) -> turant mita ke sahi.
+User ka chhota message (`hey`, `ok`) = ChatGPT turant jawab deta hai. Messages ka time bhi har baar alag: ChatGPT ka lamba reply = user zyada der padhta hai phir likhta hai, lamba reply = ChatGPT zyada sochta hai.
 `# human = off` = purana seedha ek jaisa flow. (Purana `laptop` mode hata diya.)
 
 ## Intro / end screen ka size

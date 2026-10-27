@@ -227,20 +227,35 @@ async ([items, o, ui]) => {
     };
     const toks = String(text || '').match(/\s+|\S+/g) || [];
     const L = Array.from(text || '').length;
+    let slips = L < 6 ? 0 : 1 + Math.floor(L / 35) + (Math.random() < 0.3 ? 1 : 0), first = true;
+    const typeChars = async cs => {                  // kabhi-kabhi ungli galat key par -> turant / thodi der me mita ke sahi
+      for (let q = 0; q < cs.length; q++) {
+        const c = cs[q], nb = /[a-zA-Z]/.test(c) ? nearOf(c) : null;
+        if (nb && !first && slips > 0 && Math.random() < (L < 25 ? 0.09 : 0.05)) {
+          slips--;
+          const st = typed.length; await key(nb);
+          const ex = Math.random() < 0.45 ? Math.min(cs.length - q - 1, 1 + (Math.random() < 0.3 ? 1 : 0)) : 0;
+          for (let z = 1; z <= ex; z++) await key(cs[q + z]);
+          bad = st; show(); await pause(rnd(110, 320) * ps);
+          await back(1 + ex); await sleep(base * rnd(0.6, 1.2));
+        }
+        await key(c); first = false;
+      }
+    };
     let budget = L < 14 ? 0 : L < 45 ? (Math.random() < 0.65 ? 1 : 0) : L < 110 ? 1 + (Math.random() < 0.45 ? 1 : 0) : 2 + (Math.random() < 0.4 ? 1 : 0);
     let wi = 0;
     for (let ti = 0; ti < toks.length; ti++) {
       const tk = toks[ti];
       if (/^\s+$/.test(tk)) {
         for (const ch of Array.from(tk)) await key(ch);
-        continue;
+        first = false; continue;
       }
       wi++;
       const alpha = /^[A-Za-z']+$/.test(tk.replace(/[.,!?;:]+$/, '')), core = tk.replace(/[.,!?;:]+$/, ''), tail = tk.slice(core.length);
       const chars = Array.from(tk);
-      if (budget > 0 && alpha && wi > 1 && core.length >= 3 && Math.random() < (core.length >= 5 ? 0.16 : 0.08)) {
+      if (budget > 0 && alpha && wi > 1 && core.length >= 4 && Math.random() < (core.length >= 5 ? 0.12 : 0.06)) {
         budget--;
-        if (Math.random() < 0.5 && core.length >= 4) {
+        if (core.length >= 4) {
           // poora shabd galat -> ruk ke dekha -> mita ke sahi likha
           const wr = mangle(core); const st = typed.length;
           for (const ch of Array.from(wr)) await key(ch);
@@ -249,7 +264,7 @@ async ([items, o, ui]) => {
           bad = st; show(); await pause(rnd(280, 750) * ps);
           await back(Array.from(wr).length + (sp ? 1 : 0)); await pause(rnd(90, 220) * ps);
           for (const ch of chars) await key(ch);
-        } else {
+        } else if (false) {
           // ek akshar galat -> 0-2 akshar aage nikal gaye -> mita ke sahi
           const ca = Array.from(core), p = 1 + Math.floor(Math.random() * (ca.length - 1)), wrong = nearOf(ca[p]) || ca[p];
           for (let q = 0; q < p; q++) await key(ca[q]);
@@ -261,7 +276,7 @@ async ([items, o, ui]) => {
           for (let q = p; q < chars.length; q++) await key(chars[q]);
         }
       } else {
-        for (const ch of chars) await key(ch);
+        await typeChars(chars);
       }
       // shabd ke baad sochna / saans
       if (/[.!?]$/.test(tk) && ti < toks.length - 1) await pause(rnd(300, 800) * ps);
@@ -308,11 +323,13 @@ async ([items, o, ui]) => {
         addUserMsgToChat(fin || null, fimg, true); clearInp();
         if (nx && nx.phase === 1 && nx.role !== 'user') { switchAITheme(nx.role); showThink(nx.role); }
         else if (nx && nx.phase === 2) hideThink();
-        await sleep(d(getDU() * (HUMAN ? rnd(0.8, 1.3) : 1)));
+        await sleep(d(getDU() * (HUMAN ? (n < 22 ? rnd(0.2, 0.45) : n < 60 ? rnd(0.6, 1.0) : rnd(0.85, 1.3)) : 1)));
       } else {
         app.classList.remove('battle-mode');
         if (!pv || pv.role === 'user' || pv.phase !== 1) { switchAITheme(it.role); showThink(it.role); }
-        await sleep(d(HUMAN ? rnd(650, 1050) + Math.min(1500, Array.from(txt || '').length * rnd(2, 4)) : 800 + Math.random() * 400));
+        await sleep(d(HUMAN ? (pv && pv.role === 'user' && Array.from(extractImage(pv.raw, true).cleanText || '').length < 22
+          ? rnd(220, 480) + Math.min(500, Array.from(txt || '').length * rnd(1, 2))
+          : rnd(650, 1050) + Math.min(1500, Array.from(txt || '').length * rnd(2, 4))) : 800 + Math.random() * 400));
         addAIMsg(txt || '', img, it.role); VS[k] = now(); E.push({n: 'show', k, role: it.role, t: now()});
         if (nx && nx.phase === 1 && nx.role !== 'user') { switchAITheme(nx.role); showThink(nx.role); }
         await holdFor(d((it.role !== 'chatgpt' ? getDG() : getDA()) * (HUMAN ? rnd(0.8, 1.2) : 1)), vd);

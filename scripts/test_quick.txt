@@ -1,0 +1,14 @@
+# quality = 1080p
+# voice = off
+# intro = off
+# end = on
+# typing = 0.6
+User: hey
+ChatGPT: Hey! What's up?
+User: are you awake
+ChatGPT: Always 😎
+User: ok listen, I think my roommate is reading my messages when I sleep
+ChatGPT: That's a serious privacy issue. Have you noticed anything specific that makes you think that?
+User: yes bro
+ChatGPT: Like what?
+!end: Thanks for watching! | Glitch Roast
