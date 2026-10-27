@@ -74,6 +74,19 @@ Dashboard ke **⌨️ Chat Sounds** panel me har ek ke liye **System** ya **Meri
 ```
 Kuch na likho to: file repo me hai to wahi bajti hai, warna system wali. Tumhari sound ki zor apne aap baaki awaazon jitni kar di jaati hai.
 
+## Human mode (naya, default ON)
+
+`# human = on` (likha na ho to bhi on). User ki typing insaan jaisi: har akshar ki speed alag, kabhi akshar galat (paas wali key)
+-> 1-2 akshar aage -> ruk ke mita ke sahi, kabhi poora shabd galat (`teh`, `becuase`, `their`/`there`...) -> laal lehar -> mita ke dobara.
+Comma / full stop par saans, beech me kabhi soch ke rukna, aur rukte hi typing ki awaaz bhi ruk jaati hai.
+Messages ka time bhi har baar alag: ChatGPT ka lamba reply = user zyada der padhta hai phir likhta hai, lamba reply = ChatGPT zyada sochta hai.
+`# human = off` = purana seedha ek jaisa flow. (Purana `laptop` mode hata diya.)
+
+## Intro / end screen ka size
+
+`# intro_text = Glitch Roast`  `# intro_size = 7.8` (screen ki chaudai ka %, 3-16). Bada ho to apne aap fit.
+`# end_size = 1.0` (0.5-2.2) = end screen ka text chhota / bada. Dashboard me dono ka 16:9 preview hai.
+
 ## Voice + emotion (free)
 
 Script me `# voice = on` ho to har message bola jaata hai (Microsoft ki free edge-tts awaaz). Emotion apne aap aata hai:

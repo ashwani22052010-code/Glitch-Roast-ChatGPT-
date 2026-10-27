@@ -70,8 +70,8 @@ OVERLAY_CSS = """
 .ovi .b{margin-top:3vw;height:.55vw;width:34vw;background:linear-gradient(90deg,#00f0ff,#ff2a6d);animation:ovBar .8s ease-out .3s both}
 .ove{position:absolute;inset:0;background:rgba(0,0,0,.8);display:none;flex-direction:column;align-items:center;justify-content:center;gap:3vw;text-align:center}
 .ove.on{display:flex;animation:ovFade .5s ease-out both}
-.ove .t{font-size:5.4vw;font-weight:800;color:#fff;animation:ovBub .7s cubic-bezier(.2,1.35,.4,1) .15s both}
-.ove .s{margin-top:-1.6vw;font-size:2.4vw;color:#cfd3d8;animation:ovFade .5s ease-out .5s both}
+.ove .t{font-size:calc(5.4vw * var(--es, 1));font-weight:800;color:#fff;animation:ovBub .7s cubic-bezier(.2,1.35,.4,1) .15s both}
+.ove .s{margin-top:-1.6vw;font-size:calc(2.4vw * var(--es, 1));color:#cfd3d8;animation:ovFade .5s ease-out .5s both}
 .ove .row{display:flex;align-items:center;gap:2.2vw;animation:ovSlide .6s cubic-bezier(.2,1.2,.4,1) .55s both}
 .ove .bw{position:relative;width:21vw;height:5.8vw}
 .ove .btn{position:absolute;inset:0;border-radius:2.9vw;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:2.4vw;letter-spacing:.08em;color:#fff}
@@ -105,7 +105,10 @@ async ([items, o, ui]) => {
   if (o.light && !isLightMode) toggleTheme();
   if (o.accent) setAccentColor(o.accent, null);
   typingSpeed = o.typing || 1; spd = o.speed || 1;
-  humanModeEnabled = !!o.human; laptopModeEnabled = !!o.laptop; autoPauseEnabled = false;
+  humanModeEnabled = false; laptopModeEnabled = false; autoPauseEnabled = false;
+  const HUMAN = o.human !== false;
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const words = t => (String(t || '').match(/\S+/g) || []).length;
   userImages.length = 0; aiImages.length = 0;
   (ui.user || []).forEach((u, i) => { userImages[i] = u; });
   (ui.ai || []).forEach((u, i) => { aiImages[i] = u; });
@@ -153,7 +156,7 @@ async ([items, o, ui]) => {
     if (m.cmd === 'intro') { const d = m.dur || 3.2, e = card('ovi', a, b, d, 14); await sleep(d * 1000); e.remove(); }
     else if (m.cmd === 'caption' || m.cmd === 'level') { const d = m.dur || 3, e = card('ovc', a, b, d, 18); await sleep(d * 1000); e.remove(); }
     else if (m.cmd === 'end') {
-      const e = document.createElement('div'); e.className = 'ove';
+      const e = document.createElement('div'); e.className = 'ove'; e.style.setProperty('--es', o.endSize || 1);
       e.innerHTML = '<div class="t">' + esc2(a || 'Thanks for watching!') + '</div>' + (b ? '<div class="s">' + esc2(b) + '</div>' : '') +
         '<div class="row"><div class="bw"><div class="btn sub">SUBSCRIBE</div><div class="btn done">SUBSCRIBED</div></div><div class="bell">' + BELL + '</div></div>';
       ov.appendChild(e); e.classList.add('on'); await sleep(5000); e.remove();
@@ -166,25 +169,107 @@ async ([items, o, ui]) => {
 
   // ---- typing (tool ke typeInInputBox jaisa, bas har akshar par click record hota hai)
   const CUR = '<span style="border-right: 2px solid var(--text-primary); margin-left: 1px;"></span>';
+  const NEAR = {q:'wa',w:'qes',e:'wrd',r:'etf',t:'ryg',y:'tuh',u:'yij',i:'uok',o:'ipl',p:'ol',a:'qsz',s:'adwz',d:'sfex',f:'dgrc',g:'fhtv',
+    h:'gjyb',j:'hkun',k:'jlim',l:'kop',z:'asx',x:'zcs',c:'xvd',v:'cbf',b:'vng',n:'bmh',m:'nj'};
+  const CONF = {their:'there',there:'their',your:'you',then:'than',than:'then',to:'too',its:"it's",were:'where',where:'were',lose:'loose',
+    of:'off',know:'now',from:'form',quite:'quiet',quiet:'quite',the:'teh',and:'adn',just:'jsut',what:'waht',that:'taht',with:'wiht',
+    really:'realy',because:'becuase',actually:'actualy',definitely:'definately',seriously:'seriosly',literally:'literaly',
+    probably:'probaly',okay:'okey',bro:'bruh',please:'pls',thanks:'thx',something:'somthing',everything:'everyting'};
+  const nearOf = c => { const lo = c.toLowerCase(), n = NEAR[lo]; if (!n) return null; const w = n[Math.floor(Math.random() * n.length)]; return c === lo ? w : w.toUpperCase(); };
+  const mangle = w => {
+    const lo = w.toLowerCase();
+    if (CONF[lo] && Math.random() < 0.7) { const r = CONF[lo]; return w[0] === w[0].toUpperCase() && w[0] !== w[0].toLowerCase() ? r[0].toUpperCase() + r.slice(1) : r; }
+    const a = Array.from(w), k = 1 + Math.floor(Math.random() * Math.max(1, a.length - 2)), m = Math.random();
+    if (m < 0.35 && k + 1 < a.length) { [a[k], a[k + 1]] = [a[k + 1], a[k]]; }          // do akshar ulte
+    else if (m < 0.6) a.splice(k, 1);                                                      // ek akshar chhoota
+    else if (m < 0.8) a.splice(k, 0, a[k]);                                                // ek akshar do baar
+    else { const n = nearOf(a[k]); if (n) a[k] = n; else a.splice(k, 1); }                // paas wali key
+    const r = a.join(''); return r === w ? w.slice(0, -1) : r;
+  };
   const typeIt = async (text, perChar) => {
     removeSuggestions();
     const inp = document.getElementById('chatInput'); inp.innerHTML = ''; autoResize(inp); updateButtonsState();
-    const arr = Array.from(text || ''); let i = 0, html = ''; const span = [now(), null]; TY.push(span);
+    let span = [now(), null]; TY.push(span);
+    let typed = '', bad = -1;
+    const show = () => {
+      inp.innerHTML = (bad >= 0 ? esc(typed.slice(0, bad)) + '<span style="text-decoration-line: underline; text-decoration-style: wavy; text-decoration-color: #ff4d4f; text-underline-offset: 3px;">' +
+        esc(typed.slice(bad)) + '</span>' : esc(typed)) + CUR;
+      autoResize(inp); updateButtonsState();
+    };
     await sleep(50);
-    while (i < arr.length) {
-      let delay = perChar ? perChar * (0.7 + Math.random() * 0.6) : 30 / typingSpeed;
-      if (humanModeEnabled && !perChar) { delay += (Math.random() * 40) / typingSpeed; if (Math.random() < 0.04) delay += (250 + Math.random() * 250) / typingSpeed; }
-      if (laptopModeEnabled && !perChar && Math.random() < 0.02 && i > 1 && arr[i] !== ' ' && arr[i - 1] !== ' ' && adjKeys[arr[i].toLowerCase()]) {
-        const wrong = getTypoChar(arr[i]); click();
-        inp.innerHTML = html + '<span style="text-decoration-line: underline; text-decoration-style: wavy; text-decoration-color: red; text-underline-offset: 3px; color: var(--text-primary);">' + esc(wrong) + '</span>' + CUR;
-        autoResize(inp); updateButtonsState(); await sleep(350 / typingSpeed);
-        inp.innerHTML = html + CUR; click(); await sleep(100 / typingSpeed); await sleep(delay * 2); continue;
+    if (!HUMAN || perChar) {                         // purana seedha flow (voice ke saath sync ho to bhi)
+      for (const ch of Array.from(text || '')) {
+        typed += ch; show(); if (ch.trim()) click();
+        await sleep(perChar ? perChar * (0.7 + Math.random() * 0.6) : 30 / typingSpeed);
       }
-      const ch = arr[i++]; html += esc(ch); inp.innerHTML = html + CUR; autoResize(inp); updateButtonsState();
-      if (ch.trim()) click();
-      await sleep(delay);
+      inp.innerHTML = esc(typed); autoResize(inp); updateButtonsState(); span[1] = now(); return;
     }
-    inp.innerHTML = html; autoResize(inp); updateButtonsState(); span[1] = now();
+    const base = 30 / typingSpeed, ps = 1 / Math.sqrt(Math.max(0.2, typingSpeed));
+    const pause = async ms => {                      // ruka = typing ki awaaz bhi ruki
+      if (ms < 140) { await sleep(ms); return; }
+      span[1] = now(); await sleep(ms); span = [now(), null]; TY.push(span);
+    };
+    const key = async ch => {
+      typed += ch; show(); if (ch.trim()) click();
+      let dl = base * rnd(0.55, 1.45);
+      if (ch === ' ') dl *= rnd(1.0, 1.6);
+      else if (/[A-Z]/.test(ch)) dl *= 1.35;
+      else if (/[0-9@#$%&*()_+=\-]/.test(ch)) dl *= 1.5;
+      else if (/[^\x00-\x7F]/.test(ch)) dl *= 2.2;   // emoji dhoondhna
+      await sleep(dl);
+    };
+    const back = async n => {                        // backspace (thoda tez)
+      for (let q = 0; q < n; q++) {
+        typed = Array.from(typed).slice(0, -1).join(''); if (bad >= typed.length) bad = -1;
+        show(); click(); await sleep(base * rnd(0.45, 0.75) + 25);
+      }
+      bad = -1; show();
+    };
+    const toks = String(text || '').match(/\s+|\S+/g) || [];
+    const L = Array.from(text || '').length;
+    let budget = L < 14 ? 0 : L < 45 ? (Math.random() < 0.65 ? 1 : 0) : L < 110 ? 1 + (Math.random() < 0.45 ? 1 : 0) : 2 + (Math.random() < 0.4 ? 1 : 0);
+    let wi = 0;
+    for (let ti = 0; ti < toks.length; ti++) {
+      const tk = toks[ti];
+      if (/^\s+$/.test(tk)) {
+        for (const ch of Array.from(tk)) await key(ch);
+        continue;
+      }
+      wi++;
+      const alpha = /^[A-Za-z']+$/.test(tk.replace(/[.,!?;:]+$/, '')), core = tk.replace(/[.,!?;:]+$/, ''), tail = tk.slice(core.length);
+      const chars = Array.from(tk);
+      if (budget > 0 && alpha && wi > 1 && core.length >= 3 && Math.random() < (core.length >= 5 ? 0.16 : 0.08)) {
+        budget--;
+        if (Math.random() < 0.5 && core.length >= 4) {
+          // poora shabd galat -> ruk ke dekha -> mita ke sahi likha
+          const wr = mangle(core); const st = typed.length;
+          for (const ch of Array.from(wr)) await key(ch);
+          const sp = ti + 1 < toks.length && Math.random() < 0.35;     // kabhi space ke baad dhyan jaata hai
+          if (sp) await key(' ');
+          bad = st; show(); await pause(rnd(280, 750) * ps);
+          await back(Array.from(wr).length + (sp ? 1 : 0)); await pause(rnd(90, 220) * ps);
+          for (const ch of chars) await key(ch);
+        } else {
+          // ek akshar galat -> 0-2 akshar aage nikal gaye -> mita ke sahi
+          const ca = Array.from(core), p = 1 + Math.floor(Math.random() * (ca.length - 1)), wrong = nearOf(ca[p]) || ca[p];
+          for (let q = 0; q < p; q++) await key(ca[q]);
+          const st = typed.length; await key(wrong);
+          const extra = Math.min(ca.length - p - 1, Math.floor(rnd(0, 2.4)));
+          for (let q = 1; q <= extra; q++) await key(ca[p + q]);
+          bad = st; show(); await pause(rnd(160, 420) * ps);
+          await back(1 + extra); await pause(rnd(60, 150) * ps);
+          for (let q = p; q < chars.length; q++) await key(chars[q]);
+        }
+      } else {
+        for (const ch of chars) await key(ch);
+      }
+      // shabd ke baad sochna / saans
+      if (/[.!?]$/.test(tk) && ti < toks.length - 1) await pause(rnd(300, 800) * ps);
+      else if (/[,;:]$/.test(tk)) await pause(rnd(150, 380) * ps);
+      else if (L > 25 && ti < toks.length - 2 && Math.random() < 0.06) await pause(rnd(400, 1200) * ps);
+      else if (Math.random() < 0.08) await pause(rnd(120, 260) * ps);
+    }
+    inp.innerHTML = esc(typed); autoResize(inp); updateButtonsState(); span[1] = now();
   };
   const think = role => role === 'gemini' ? getGeminiBThink() : role === 'grok' ? getGrokBThink() : role === 'claude' ? getClaudeBThink() : getGptBThink();
   const holdFor = async (ms, vd) => { await sleep(Math.max(ms, vd ? vd * 1000 + 350 : 0)); };
@@ -203,30 +288,34 @@ async ([items, o, ui]) => {
       if (it.phase === 2) {
         E.push({n: 'think', k, role: it.role, t: now(), first: !(pv && pv.phase === 2)});
         app.classList.add('battle-mode'); ca.innerHTML = ''; switchAITheme(it.role); showThink(it.role);
-        await sleep(d(think(it.role)));
+        await sleep(d(think(it.role) * (HUMAN ? rnd(0.85, 1.25) : 1)));
         ca.innerHTML = ''; addAIMsg(txt || '', img, it.role); VS[k] = now(); E.push({n: 'show', k, role: it.role, t: now()});
-        await holdFor(d(it.role !== 'chatgpt' ? getDG() : getDA()) + 1500, vd);
+        await holdFor(d((it.role !== 'chatgpt' ? getDG() : getDA()) * (HUMAN ? rnd(0.85, 1.2) : 1) + 1500 + (HUMAN ? Math.min(3000, words(txt) * 90) : 0)), vd);
         if (meme) await window.memeHold(meme);
       } else if (it.role === 'user') {
         switchAITheme('chatgpt'); app.classList.remove('battle-mode'); if (img) showInputImage(img);
+        if (HUMAN && pv && pv.role !== 'user' && pv.phase === 1) {      // ChatGPT ka reply padha, phir socha
+          const pr = extractImage(pv.raw, false).cleanText || '';
+          await sleep(d(Math.min(4500, words(pr) * rnd(110, 170)) + Math.min(900, Array.from(txt || '').length * rnd(4, 9)) + rnd(0, 400)));
+        }
         VS[k] = now() + 50;
         const n = Array.from(txt || '').length;
         await typeIt(txt, vd && n ? Math.max(12, Math.min(400, vd * 1000 / (n + 1))) : 0);
-        await sleep((getSendDelay() * 1000) / spd);
+        await sleep((getSendDelay() * 1000 * (HUMAN ? rnd(0.45, 1.3) : 1)) / spd);
         if (meme) await window.memeHold(meme);
         const inp = document.getElementById('chatInput'), fin = inp.innerText.trim(), fimg = inputImageData;
         E.push({n: 'send', k, role: 'user', t: now()});
         addUserMsgToChat(fin || null, fimg, true); clearInp();
         if (nx && nx.phase === 1 && nx.role !== 'user') { switchAITheme(nx.role); showThink(nx.role); }
         else if (nx && nx.phase === 2) hideThink();
-        await sleep(d(getDU()));
+        await sleep(d(getDU() * (HUMAN ? rnd(0.8, 1.3) : 1)));
       } else {
         app.classList.remove('battle-mode');
         if (!pv || pv.role === 'user' || pv.phase !== 1) { switchAITheme(it.role); showThink(it.role); }
-        await sleep(d(800 + Math.random() * 400));
+        await sleep(d(HUMAN ? rnd(650, 1050) + Math.min(1500, Array.from(txt || '').length * rnd(2, 4)) : 800 + Math.random() * 400));
         addAIMsg(txt || '', img, it.role); VS[k] = now(); E.push({n: 'show', k, role: it.role, t: now()});
         if (nx && nx.phase === 1 && nx.role !== 'user') { switchAITheme(nx.role); showThink(nx.role); }
-        await holdFor(d(it.role !== 'chatgpt' ? getDG() : getDA()), vd);
+        await holdFor(d((it.role !== 'chatgpt' ? getDG() : getDA()) * (HUMAN ? rnd(0.8, 1.2) : 1)), vd);
         if (meme) await window.memeHold(meme);
       }
     }
@@ -237,7 +326,7 @@ async ([items, o, ui]) => {
 }
 """
 
-OPT_RE = re.compile(r"^\s*#\s*(typing|speed|human|laptop|light|accent|ratio|view|ui|music|sfx|sfx_auto|sfx_real|click|keys|typing_sound|typing_mode|send_sound|recv_sound|send_vol|recv_vol|intro|shorts|auto|end|bgm|bgm_start|bgm_vol|quality|fps|intro_len|end_len|intro_vol|end_vol|meme_vol|"
+OPT_RE = re.compile(r"^\s*#\s*(typing|speed|human|laptop|light|accent|ratio|view|ui|music|sfx|sfx_auto|sfx_real|click|keys|typing_sound|typing_mode|send_sound|recv_sound|send_vol|recv_vol|intro|shorts|auto|end|bgm|bgm_start|bgm_vol|quality|fps|intro_len|intro_size|end_size|end_len|intro_vol|end_vol|meme_vol|"
                     r"gpt_delay|opp_delay|user_delay|send_delay|chat_size|think_gpt|think_gemini|think_grok|think_claude|start_delay|"
                     r"voice|voice_emotion|voice_user|voice_ai|voice_gemini|voice_grok|voice_claude|voice_user_rate|voice_user_pitch|voice_ai_rate|voice_ai_pitch|voice_vol)\s*=\s*(\S+)\s*$", re.I)
 TEXT_OPT_RE = re.compile(r"^\s*#\s*(intro_text|end_text|end_sub)\s*=\s*(.+?)\s*$", re.I)
@@ -2026,6 +2115,7 @@ def make_audio(clicks_s, events, music_tl, seconds, intro_s, path, vol_click, vo
 
 # ================================================================= INTRO (frames)
 INTRO_HTML = """<!doctype html><meta charset=utf-8><style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@800&display=block');
 html,body{margin:0;height:100%%;overflow:hidden;background:#07090e}
 body{display:flex;align-items:center;justify-content:center;flex-direction:column;
  background:radial-gradient(ellipse at center,#151b28 0%%,#07090e 75%%)}
@@ -2039,14 +2129,16 @@ body{display:flex;align-items:center;justify-content:center;flex-direction:colum
 @keyframes out{0%%{opacity:1}86%%{opacity:1}100%%{opacity:0}}
 </style><div class=c><div class=w>@@NAME@@</div><div class=bar></div></div>"""
 
-def render_intro(browser, ff, fps, dsf, brand=BRAND):
+def render_intro(browser, ff, fps, dsf, brand=BRAND, isize=0):
     bw, bh = (1920, 1080) if W >= H else (1080, 1920)
     page = browser.new_context(viewport={"width": bw, "height": bh}, device_scale_factor=W / bw).new_page()
     brand = (brand or BRAND).strip()[:40]
-    fs = max(40, min(150, int((bw - 220) / (0.66 * max(1, len(brand))))))
+    fs = int(isize / 100 * bw) if isize else max(40, min(150, int((bw - 220) / (0.66 * max(1, len(brand))))))
     esc = brand.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     page.set_content((INTRO_HTML % {"d": INTRO_S}).replace("font:800 150px/1", f"font:800 {fs}px/1").replace("@@NAME@@", esc))
     page.evaluate("document.fonts.ready.then(()=>1)")
+    page.evaluate("""W=>{const w=document.querySelector('.w');let f=parseFloat(getComputedStyle(w).fontSize);
+      while(w.scrollWidth>W*0.92&&f>20){f-=2;w.style.fontSize=f+'px';}}""", bw)
     n = int(round(INTRO_S * fps))
     for k in range(n):
         page.evaluate("T=>document.getAnimations().forEach(a=>{a.pause();a.currentTime=T})", k * 1000.0 / fps)
@@ -2131,7 +2223,7 @@ def segment_task(t):
     with sync_playwright() as p:
         b = p.chromium.launch(args=LAUNCH_ARGS)
         if t["kind"] == "intro":
-            render_intro(b, ff, fps, t["dsf"], t.get("brand", BRAND))
+            render_intro(b, ff, fps, t["dsf"], t.get("brand", BRAND), t.get("isize", 0))
         elif t["kind"] in ("introvid", "endvid"):
             for jpg in video_frames(t["clip"], fps, 0, t["n"], size):
                 ff.stdin.write(jpg)
@@ -2949,7 +3041,7 @@ def settings(script, a):
     accent = str(opts.get("accent", "")).lower()
     jsopts = dict(ratio=ratio, light=on("light"), accent=accent if accent in ("blue", "green", "yellow", "pink", "orange", "purple", "black") else None,
                   typing=max(0.1, min(3.0, fl("typing", 1.0))), speed=max(0.25, min(3.0, fl("speed", 1.0))),
-                  human=on("human"), laptop=on("laptop"), end=end_on, endText=opts.get("end_text") or "Thanks for watching!",
+                  human=not off("human"), laptop=False, endSize=max(0.4, min(2.5, fl("end_size", 1.0))), end=end_on, endText=opts.get("end_text") or "Thanks for watching!",
                   brand=opts.get("end_sub") or brand, start=int(fl("start_delay", 2.0) * 1000))
     sr_ = str(opts.get("sfx_real", "")).lower()
     SFX_MODE[0] = "code" if sr_ in ("off", "no", "code", "0", "false") else "mix" if sr_ in ("mix", "on", "both") else ("real" if REAL_SFX else "code")
@@ -2968,7 +3060,7 @@ def settings(script, a):
         vol_sfx=0.0 if off("sfx") else (1.0 if str(opts.get("sfx", "on")).lower() == "on" else float(opts["sfx"])),
         want_shorts=(not off("shorts", "off")) and ratio != "9:16", bgm=find_bgm(opts))
     cfg = dict(items=items, opts=opts, jsopts=jsopts, ls=ls, ui=ui, html=a.html, font=a.font, osize=(W, H), view=(VW, VH),
-               dsf=W / VW, fps=fps, crf=a.crf, preset=a.preset, name=S["name"], brand=brand, memes=memes, vdur={})
+               dsf=W / VW, fps=fps, crf=a.crf, preset=a.preset, name=S["name"], brand=brand, memes=memes, vdur={}, isize=max(0.0, min(25.0, fl("intro_size", 0))))
     print(f"[{S['name']}] {ratio} {W}x{H} @ {fps}fps (tool size {VW}x{VH}), {sum(1 for x in items if x.get('k') is not None)} messages, "
           f"ui images: {sorted(ui['saved'])}, user imgs: {len(ui['user'])}, ai imgs: {len(ui['ai'])}, settings: {len(ls)}", flush=True)
     return S, cfg

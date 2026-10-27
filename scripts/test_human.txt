@@ -1,0 +1,19 @@
+# quality = 1080p
+# fps = 30
+# ratio = 16:9
+# voice = off
+# intro = on
+# intro_text = Glitch Roast
+# intro_size = 9
+# end = on
+# end_size = 1.2
+# typing = 0.6
+# bgm = bgm
+# bgm_vol = 0.12
+User: Hey ChatGPT, I really need your help with something important tonight
+ChatGPT: Of course! I'm here to help. Tell me what's going on and we'll figure it out together, step by step. No judgement here, I promise.
+User: Ok so basically my girlfriend found out that I was using you to write her texts 😭
+ChatGPT: Oh no.
+User: Yeah. What should I do now? Should I tell her the truth or just pretend it never happened?
+ChatGPT: Honestly? Tell her the truth. And maybe write the apology yourself this time 😅
+!end: Thanks for watching! | Glitch Roast
