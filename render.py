@@ -130,96 +130,6 @@ async ([items, o, ui]) => {
   Object.defineProperty(ca, 'scrollTop', { configurable: true, get() { return SD.get.call(ca); },
     set(v) { sFrom = SD.get.call(ca); sTo = v; sT0 = now(); if (!sOn) { sOn = true; setTimeout(sStep, 16); } } });
 
-  // ---- camera zoom (clock ke hisaab se, har render me same)
-  const CAM = {s: 1, cx: 0, cy: 0, gs: 1, tau: 250, goal: null, run: false, last: 0, tx: 0, ty: 0};
-  const ZOOM = o.zoom !== false;
-  app.style.transformOrigin = '0 0'; app.style.willChange = 'transform';
-  const A0 = (() => { const t = app.style.transform; app.style.transform = 'none'; const r = app.getBoundingClientRect(); app.style.transform = t; return r; })();
-  const toOrig = r => ({l: A0.left + (r.left - A0.left - CAM.tx) / CAM.s, t: A0.top + (r.top - A0.top - CAM.ty) / CAM.s,
-                        w: r.width / CAM.s, h: r.height / CAM.s});
-  const camApply = () => {
-    const s = CAM.s, VWp = innerWidth, VHp = innerHeight;
-    let tx = VWp / 2 - A0.left - (CAM.cx - A0.left) * s, ty = VHp / 2 - A0.top - (CAM.cy - A0.top) * s;
-    tx = Math.min(0, Math.max(A0.width * (1 - s), tx)); ty = Math.min(0, Math.max(A0.height * (1 - s), ty));
-    CAM.tx = tx; CAM.ty = ty;
-    app.style.transform = s > 1.0005 ? `translate(${tx.toFixed(2)}px,${ty.toFixed(2)}px) scale(${s.toFixed(4)})` : 'none';
-    if (s <= 1.0005) { CAM.tx = 0; CAM.ty = 0; }
-  };
-  const camTick = () => {
-    const t = now(), dt = Math.max(1, t - CAM.last); CAM.last = t;
-    const k = 1 - Math.exp(-dt / CAM.tau);
-    let gx = A0.left + A0.width / 2, gy = A0.top + A0.height / 2;
-    if (CAM.goal) { try { const p = CAM.goal(); if (p) { gx = p[0]; gy = p[1]; } } catch (e) {} }
-    if (CAM.s < 1.02 && CAM.gs > 1) { CAM.cx = gx; CAM.cy = gy; }
-    CAM.s += (CAM.gs - CAM.s) * k; CAM.cx += (gx - CAM.cx) * k; CAM.cy += (gy - CAM.cy) * k;
-    camApply();
-    if (CAM.gs <= 1 && Math.abs(CAM.s - 1) < 0.002) { CAM.s = 1; camApply(); CAM.run = false; return; }
-    setTimeout(camTick, 16);
-  };
-  const camGo = (s, goal, tau) => {
-    CAM.gs = s; CAM.goal = goal; CAM.tau = tau;
-    if (!CAM.run) { CAM.run = true; CAM.last = now(); setTimeout(camTick, 16); }
-  };
-  const camReset = (tau = 230) => { if (CAM.gs > 1 || CAM.run) camGo(1, null, tau); };
-  const camHard = () => { CAM.gs = 1; CAM.s = 1; CAM.goal = null; camApply(); };
-  const LV_TAU = [250, 300, 140, 40];
-  const textBox = el => {                                   // asli text kitni jagah me hai (poori line nahi)
-    const rg = document.createRange(); rg.selectNodeContents(el); const rs = [...rg.getClientRects()].filter(r => r.width > 0);
-    if (!rs.length) return toOrig(el.getBoundingClientRect());
-    const l = Math.min(...rs.map(r => r.left)), t = Math.min(...rs.map(r => r.top)), rr = Math.max(...rs.map(r => r.right)), b = Math.max(...rs.map(r => r.bottom));
-    return toOrig({left: l, top: t, width: rr - l, height: b - t});
-  };
-  const fitPt = (b, s, lead) => {                          // box ko frame me rakho; bada ho to aakhri hissa
-    const hw = innerWidth / (2 * s) * 0.92, hh = innerHeight / (2 * s) * 0.86;
-    const cx = b.w <= 2 * hw ? b.l + b.w / 2 : Math.min(b.l + b.w - hw, Math.max(b.l + hw, lead == null ? b.l + hw : lead));
-    const cy = b.h <= 2 * hh ? b.t + b.h / 2 : b.t + b.h - hh;
-    return [cx, cy];
-  };
-  const camInput = lv => {                                  // typing box par, caret ke saath chalta camera
-    if (!ZOOM || !lv) return;
-    const inp = document.getElementById('chatInput'), wrap = inp.closest('.input-wrapper') || inp;
-    const pill = inp.parentElement && inp.parentElement.getBoundingClientRect().width > 80 ? inp.parentElement : inp;
-    const s0 = [1, 1.45, 1.75, 2.1][lv] * rnd(0.93, 1.07);
-    const ob = toOrig(pill.getBoundingClientRect());
-    const s = Math.min(s0, innerHeight * 0.55 / Math.max(40, ob.h));
-    camGo(s, () => {
-      const b = toOrig(pill.getBoundingClientRect()), c = inp.querySelector('span:last-child');
-      const cr = c ? toOrig(c.getBoundingClientRect()) : null;
-      const hw = innerWidth / (2 * CAM.gs) * 0.92;
-      return fitPt(b, CAM.gs, cr ? cr.l - hw * 0.25 : null);
-    }, LV_TAU[lv]);
-  };
-  const camMsg = (el, lv, quick) => {                       // ChatGPT ke reply par
-    if (!ZOOM || !lv || !el) return;
-    const b = textBox(el);
-    let s = [1, 1.35, 1.65, 1.95][lv] * rnd(0.93, 1.07);
-    s = Math.max(Math.min(s, innerWidth * 0.9 / Math.max(60, b.w)), lv >= 2 ? 1.18 : 1.12);
-    s = Math.min(s, Math.max(1.12, innerHeight * 0.8 / Math.max(30, b.h)));
-    const f = () => fitPt(textBox(el), CAM.gs);
-    if (lv === 3 && !quick) { camGo(s * 1.1, f, 35); setTimeout(() => { if (CAM.gs > 1) camGo(s, f, 140); }, 150); }
-    else camGo(s, f, quick ? 160 : LV_TAU[lv]);
-  };
-  const EMO_RX = /\p{Extended_Pictographic}/u;
-  const emojiRect = el => {
-    const tw = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-    let n; while ((n = tw.nextNode())) {
-      const arr = Array.from(n.data); let off = 0;
-      for (const ch of arr) {
-        if (EMO_RX.test(ch)) { const rg = document.createRange(); rg.setStart(n, off); rg.setEnd(n, off + ch.length);
-          const r = rg.getBoundingClientRect(); if (r.width > 0) return r; }
-        off += ch.length;
-      }
-    }
-    return null;
-  };
-  const camEmoji = async (el, ms) => {                      // emoji par full zoom
-    if (!ZOOM || !el) return false;
-    const r0 = emojiRect(el); if (!r0) return false;
-    const b0 = toOrig(r0), s = Math.min(4.2, Math.max(2.4, innerHeight * 0.34 / Math.max(10, b0.h)));
-    camGo(s, () => { const r = emojiRect(el); const b = r ? toOrig(r) : b0; return [b.l + b.w / 2, b.t + b.h / 2]; }, 70);
-    await sleep(ms); return true;
-  };
-
   // ---- overlay: intro / caption / end screen
   const ov = document.createElement('div'); ov.id = 'ov'; app.appendChild(ov);
   const esc2 = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -242,7 +152,6 @@ async ([items, o, ui]) => {
     return e;
   };
   const cmd = async m => {
-    camHard();
     const [a, b] = split(m.t); E.push({n: 'cmd', c: m.cmd, t: now()});
     if (m.cmd === 'intro') { const d = m.dur || 3.2, e = card('ovi', a, b, d, 14); await sleep(d * 1000); e.remove(); }
     else if (m.cmd === 'caption' || m.cmd === 'level') { const d = m.dur || 3, e = card('ovc', a, b, d, 18); await sleep(d * 1000); e.remove(); }
@@ -396,11 +305,7 @@ async ([items, o, ui]) => {
         app.classList.add('battle-mode'); ca.innerHTML = ''; switchAITheme(it.role); showThink(it.role);
         await sleep(d(think(it.role) * (HUMAN ? rnd(0.85, 1.25) : 1)));
         ca.innerHTML = ''; addAIMsg(txt || '', img, it.role); VS[k] = now(); E.push({n: 'show', k, role: it.role, t: now()});
-        const zl = ZOOM ? (it.zoom || 0) : 0, blk = [...ca.querySelectorAll('.ai-block')].pop(), zel = blk && (blk.querySelector('.ai-text') || blk);
-        if (zl) { if (zl < 3) await sleep(rnd(120, 260)); camMsg(zel, zl); }
-        if (zl && it.zemo) { (async () => { await sleep(650); if (await camEmoji(zel, 900)) camMsg(zel, zl, true); })(); }
-        await holdFor(d((it.role !== 'chatgpt' ? getDG() : getDA()) * (HUMAN ? rnd(0.85, 1.2) : 1) + 1500 + (HUMAN ? Math.min(3000, words(txt) * 90) : 0)) + (zl ? 500 : 0) + (zl && it.zemo ? 1500 : 0), vd);
-        if (zl) camReset(zl === 3 ? 140 : 230);
+        await holdFor(d((it.role !== 'chatgpt' ? getDG() : getDA()) * (HUMAN ? rnd(0.85, 1.2) : 1) + 1500 + (HUMAN ? Math.min(3000, words(txt) * 90) : 0)), vd);
         if (meme) await window.memeHold(meme);
       } else if (it.role === 'user') {
         switchAITheme('chatgpt'); app.classList.remove('battle-mode'); if (img) showInputImage(img);
@@ -409,12 +314,9 @@ async ([items, o, ui]) => {
           await sleep(d(Math.min(4500, words(pr) * rnd(110, 170)) + Math.min(900, Array.from(txt || '').length * rnd(4, 9)) + rnd(0, 400)));
         }
         VS[k] = now() + 50;
-        const n = Array.from(txt || '').length, zl = ZOOM ? (it.zoom || 0) : 0;
-        if (zl) { camInput(zl); await sleep(zl === 3 ? 60 : rnd(180, 300)); }
+        const n = Array.from(txt || '').length;
         await typeIt(txt, vd && n ? Math.max(12, Math.min(400, vd * 1000 / (n + 1))) : 0);
-        if (zl && it.zemo && await camEmoji(document.getElementById('chatInput'), 750)) camInput(zl);
         await sleep((getSendDelay() * 1000 * (HUMAN ? rnd(0.45, 1.3) : 1)) / spd);
-        if (zl) camReset(zl === 3 ? 120 : 200);
         if (meme) await window.memeHold(meme);
         const inp = document.getElementById('chatInput'), fin = inp.innerText.trim(), fimg = inputImageData;
         E.push({n: 'send', k, role: 'user', t: now()});
@@ -429,12 +331,8 @@ async ([items, o, ui]) => {
           ? rnd(220, 480) + Math.min(500, Array.from(txt || '').length * rnd(1, 2))
           : rnd(650, 1050) + Math.min(1500, Array.from(txt || '').length * rnd(2, 4))) : 800 + Math.random() * 400));
         addAIMsg(txt || '', img, it.role); VS[k] = now(); E.push({n: 'show', k, role: it.role, t: now()});
-        const zl = ZOOM ? (it.zoom || 0) : 0, blk = [...ca.querySelectorAll('.ai-block')].pop(), zel = blk && (blk.querySelector('.ai-text') || blk);
-        if (zl) { if (zl < 3) await sleep(rnd(120, 260)); camMsg(zel, zl); }
         if (nx && nx.phase === 1 && nx.role !== 'user') { switchAITheme(nx.role); showThink(nx.role); }
-        if (zl && it.zemo) { (async () => { await sleep(650); if (await camEmoji(zel, 900)) camMsg(zel, zl, true); })(); }
-        await holdFor(d((it.role !== 'chatgpt' ? getDG() : getDA()) * (HUMAN ? rnd(0.8, 1.2) : 1)) + (zl ? 500 : 0) + (zl && it.zemo ? 1500 : 0), vd);
-        if (zl) camReset(zl === 3 ? 140 : 230);
+        await holdFor(d((it.role !== 'chatgpt' ? getDG() : getDA()) * (HUMAN ? rnd(0.8, 1.2) : 1)), vd);
         if (meme) await window.memeHold(meme);
       }
     }
@@ -445,7 +343,7 @@ async ([items, o, ui]) => {
 }
 """
 
-OPT_RE = re.compile(r"^\s*#\s*(typing|speed|human|laptop|light|accent|ratio|view|ui|music|sfx|sfx_auto|sfx_real|click|keys|typing_sound|typing_mode|send_sound|recv_sound|send_vol|recv_vol|intro|shorts|auto|end|bgm|bgm_start|bgm_vol|quality|fps|zoom|intro_len|intro_size|end_size|end_len|intro_vol|end_vol|meme_vol|"
+OPT_RE = re.compile(r"^\s*#\s*(typing|speed|human|laptop|light|accent|ratio|view|ui|music|sfx|sfx_auto|sfx_real|click|keys|typing_sound|typing_mode|send_sound|recv_sound|send_vol|recv_vol|intro|shorts|auto|end|bgm|bgm_start|bgm_vol|quality|fps|intro_len|intro_size|end_size|end_len|intro_vol|end_vol|meme_vol|"
                     r"gpt_delay|opp_delay|user_delay|send_delay|chat_size|think_gpt|think_gemini|think_grok|think_claude|start_delay|"
                     r"voice|voice_emotion|voice_user|voice_ai|voice_gemini|voice_grok|voice_claude|voice_user_rate|voice_user_pitch|voice_ai_rate|voice_ai_pitch|voice_vol)\s*=\s*(\S+)\s*$", re.I)
 TEXT_OPT_RE = re.compile(r"^\s*#\s*(intro_text|end_text|end_sub)\s*=\s*(.+?)\s*$", re.I)
@@ -613,51 +511,13 @@ def auto_mood(text):
     return None
 
 ZOOM_TAG_RE = re.compile(r"\s*\{\s*(nozoom|zoom(?:[1-3]|_?fast|_?emoji|_?soft|_?big)?)\s*\}", re.I)
-ZTAGS = {}
-ZOOM_DANGER = re.compile(r"\b(kill\w*|murder\w*|dead|die[sd]?|dying|death|blood\w*|gun|knife|bomb\w*|hack\w*|police|fbi|cia|secret\w*|password\w*|"
-    r"threat\w*|stalk\w*|watching|tracking|track(ed|ing)?|location|address|behind you|run\b|hide|hiding|help me|emergency|warn\w*|danger\w*|"
-    r"scary|ghost\w*|haunt\w*|delet\w*|leak\w*|expos\w*|camera|webcam|who are you|i know where|i can see|i see you|liar|lying|cheat\w*|"
-    r"betray\w*|trapped|escape|virus|destroy\w*|goodbye|i'?m coming|coming for|don'?t (?:tell|look|open|trust|move)|right now|too late|"
-    r"never again|it'?s over|game over|caught|arrest\w*|jail|prison|dark web|evidence|confess\w*|truth)\b", re.I)
-ZOOM_IMPORTANT = re.compile(r"\b(important|urgent|listen|wait|seriously|actually|plot twist|guess what|breaking|finally|exactly|"
-    r"the answer|remember this|pay attention|focus|careful|omg|oh no|what the|wtf|no way|impossible|unbelievable|shocking)\b", re.I)
-ZOOM_HOT = set("😱💀🔪🩸👀🚨⚠😈👻☠😨😰🤯😳🫣🔥💣🧨😡🤬❗‼⁉🛑😵🥶🫨")
-
-def zoom_plan(items, moods, opts):
-    """har message ka zoom: 0 nahi, 1 halka, 2 tez, 3 turant (+ emoji par punch)"""
-    if str(opts.get("zoom", "on")).lower() in ("off", "no", "0", "false"): return
-    prev = []
-    for it in items:
-        if it.get("k") is None: continue
-        k, txt = it["k"], it.get("raw") or ""
-        zt = ZTAGS.get(k, [])
-        hot = [c for c in txt if c in ZOOM_HOT]
-        if "nozoom" in zt: lv, emo = 0, False
-        elif zt:
-            t = zt[-1]
-            lv = 3 if ("3" in t or "fast" in t or "big" in t) else 1 if ("1" in t or "soft" in t) else 2 if t != "zoom_emoji" and t != "zoomemoji" else 3
-            emo = "emoji" in t or (lv == 3 and bool(hot))
-        else:
-            words = re.findall(r"[A-Za-z']+", txt)
-            caps = sum(1 for w in words if len(w) >= 3 and w.isupper())
-            sc = 2.0 * min(2, len(ZOOM_DANGER.findall(txt))) + 1.0 * min(2, len(ZOOM_IMPORTANT.findall(txt))) + 1.5 * min(2, len(hot))
-            sc += 2.0 if caps >= 2 or (caps == 1 and len(words) <= 3) else 0
-            sc += 1.5 if re.search(r"!!|\?!|!\?", txt) else 0
-            sc += 1.5 if moods.get(k) in ("scary", "angry", "surprise", "mystery") else 0
-            if len(txt) > 260: sc -= 1.5                      # bahut lamba = zoom se padhna mushkil
-            lv = 3 if sc >= 5 else 2 if sc >= 3 else 1 if sc >= 1.8 else 0
-            if lv == 1 and prev and prev[-1] > 0: lv = 0       # baar-baar halka zoom nahi
-            if lv == 2 and len(prev) >= 2 and prev[-1] >= 2 and prev[-2] >= 2: lv = 1
-            emo = bool(hot) and (lv == 3 or (lv == 2 and bool(ZOOM_DANGER.search(txt))))
-        it["zoom"], it["zemo"] = lv, bool(emo)
-        prev.append(lv)
 
 def parse_script(path):
     """script -> (items, opts, moods, memes, {k:(role, voice text)})
     items: [{k, role, raw, phase}] ya {role:'cmd', cmd, dur, t}"""
     opts, items, tags, texts, memes, phase, vemo = {}, [], {}, {}, {}, 1, {}
     skip_user, stags = False, {}
-    k = -1; ZTAGS.clear()
+    k = -1
     for line in Path(path).read_text(encoding="utf-8-sig").splitlines():
         line = fix_mojibake(line).rstrip()
         m = TEXT_OPT_RE.match(line)
@@ -683,7 +543,6 @@ def parse_script(path):
             continue
         else:
             body = line.strip()
-        for zt in ZOOM_TAG_RE.findall(body): ZTAGS.setdefault(k, []).append(zt.lower())
         body = ZOOM_TAG_RE.sub("", body)
         mv = list(VOICE_TAG_RE.finditer(body))
         if mv: vemo[k] = mv[-1].group(1).lower(); body = VOICE_TAG_RE.sub("", body)
@@ -3145,7 +3004,6 @@ def load_ui(ratio="16:9"):
 def settings(script, a):
     global W, H, VW, VH
     items, opts, moods, memes, vraw, vemo, stags = parse_script(script)
-    zoom_plan(items, moods, opts)
     if not any(x.get("k") is not None for x in items): sys.exit(f"{script}: script me koi message nahi mila (User: / ChatGPT: / Gemini: / Grok: / Claude:)")
     off = lambda k, d="on": str(opts.get(k, d)).lower() in ("off", "no", "0", "false")
     on = lambda k, d="off": str(opts.get(k, d)).lower() in TRUE
@@ -3204,7 +3062,7 @@ def settings(script, a):
     jsopts = dict(ratio=ratio, light=on("light"), accent=accent if accent in ("blue", "green", "yellow", "pink", "orange", "purple", "black") else None,
                   typing=max(0.1, min(3.0, fl("typing", 1.0))), speed=max(0.25, min(3.0, fl("speed", 1.0))),
                   human=not off("human"), laptop=False, endSize=max(0.4, min(2.5, fl("end_size", 1.0))), end=end_on, endText=opts.get("end_text") or "Thanks for watching!",
-                  brand=opts.get("end_sub") or brand, start=int(fl("start_delay", 0.5 if use_intro else 2.0) * 1000), zoom=not off("zoom"))
+                  brand=opts.get("end_sub") or brand, start=int(fl("start_delay", 0.5 if use_intro else 2.0) * 1000))
     sr_ = str(opts.get("sfx_real", "")).lower()
     SFX_MODE[0] = "code" if sr_ in ("off", "no", "code", "0", "false") else "mix" if sr_ in ("mix", "on", "both") else ("real" if REAL_SFX else "code")
     S = dict(
