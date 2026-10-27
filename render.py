@@ -62,13 +62,15 @@ OVERLAY_CSS = """
 .ovi{background:#05070a}
 .ovi.on{display:flex;animation:ovBg var(--d) linear both}
 .ovc.on{display:flex}
-.ovi .t,.ovc .ct{position:relative;font-weight:800;line-height:1.12;color:#fff;letter-spacing:.01em;
+.ovi .t{position:relative;font-weight:800;line-height:1.12;color:#fff;letter-spacing:.01em;animation:ovBub .7s cubic-bezier(.2,1.35,.4,1) .1s both}
+.ovi .b{border-radius:.6vw}
+.ovc .ct{position:relative;font-weight:800;line-height:1.12;color:#fff;letter-spacing:.01em;
  text-shadow:-.28vw 0 #00f0ff,.28vw 0 #ff2a6d;animation:ovPop .5s cubic-bezier(.2,1.3,.4,1) both,ovGl .6s steps(1) both}
 .ovi .s,.ovc .cs{margin-top:2vw;color:#cfd3d8;font-weight:600;animation:ovFade .5s ease-out .45s both}
 .ovi .b{margin-top:3vw;height:.55vw;width:34vw;background:linear-gradient(90deg,#00f0ff,#ff2a6d);animation:ovBar .8s ease-out .3s both}
 .ove{position:absolute;inset:0;background:rgba(0,0,0,.8);display:none;flex-direction:column;align-items:center;justify-content:center;gap:3vw;text-align:center}
 .ove.on{display:flex;animation:ovFade .5s ease-out both}
-.ove .t{font-size:5.4vw;font-weight:800;color:#fff;animation:ovPop .6s cubic-bezier(.2,1.4,.4,1) .15s both}
+.ove .t{font-size:5.4vw;font-weight:800;color:#fff;animation:ovBub .7s cubic-bezier(.2,1.35,.4,1) .15s both}
 .ove .s{margin-top:-1.6vw;font-size:2.4vw;color:#cfd3d8;animation:ovFade .5s ease-out .5s both}
 .ove .row{display:flex;align-items:center;gap:2.2vw;animation:ovSlide .6s cubic-bezier(.2,1.2,.4,1) .55s both}
 .ove .bw{position:relative;width:21vw;height:5.8vw}
@@ -78,6 +80,7 @@ OVERLAY_CSS = """
 .ove .bell{width:5.2vw;height:5.2vw;opacity:0;animation:ovFade .3s ease-out 1.8s both}
 .ove .bell svg{width:100%;height:100%;stroke:#fff;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;transform-origin:50% 8%;animation:ovRing 1.2s ease-in-out 2.1s both}
 @keyframes ovBg{0%{opacity:0}5%{opacity:1}90%{opacity:1}100%{opacity:0}}
+@keyframes ovBub{0%{opacity:0;transform:scale(.55);filter:blur(.6vw)}60%{opacity:1;filter:blur(0)}100%{opacity:1;transform:scale(1);filter:blur(0)}}
 @keyframes ovPop{0%{opacity:0;transform:scale(.88)}100%{opacity:1;transform:scale(1)}}
 @keyframes ovFade{0%{opacity:0}100%{opacity:1}}
 @keyframes ovBar{0%{width:0}100%{width:34vw}}
@@ -1620,7 +1623,7 @@ SFX_MODE = ["real" if REAL_SFX else "code"]
 ANCHOR_PEAK, ANCHOR_END = {"swell_hit", "vs_hit", "zoom_hit", "punch"}, {"riser"}
 
 def sfx_have(name):
-    """sirf wahi awaaz jo tumne sounds/ me upload ki"""
+    """mood effects: sirf wahi jo tumne sounds/ me upload ki"""
     return name in CUSTOM_SFX
     return name in CUSTOM_SFX or SFX_MODE[0] != "real" or REAL_ALIAS.get(name, name) in REAL_SFX
 
@@ -1633,7 +1636,7 @@ def sfx_full(name, var=0):
     """naam -> (awaaz, anchor sec). anchor = awaaz ka wo pal jo message ke saath milna chahiye (jaise riser ka end)"""
     key = (name, var, SFX_MODE[0])
     if key in _sfx_cache: return _sfx_cache[key]
-    if name not in CUSTOM_SFX:          # sirf tumhari file (timing ke liye)
+    if name not in CUSTOM_SFX and name not in UI_NAMES:              # system ke mood effects ab nahi
         _sfx_cache[key] = (np.zeros(10), 0.0); return _sfx_cache[key]
     rn = REAL_ALIAS.get(name, name)
     if SFX_MODE[0] != "code" and rn in REAL_SFX:
@@ -1732,9 +1735,10 @@ def plan_sfx(cfg, S, plan, sh, t0):
         nxt = next((m for m in marks if m > ev_t(e) + 0.05), None)          # agla message / typing kab shuru
         if e["n"] == "cmd":
             c = e.get("c"); t_ = sh(e["ts"])
-            if c == "intro": ev += [(t_ + 0.02, "whoosh", 0, 1.0, False), (t_ + 0.4, "hit", 0, 1.0, False)]
+            if c == "intro": ev += [(t_ + 0.12, "bubble", 3, 1.0, False), (t_ + 0.55, "bubble_hi", 4, 0.7, False)]
             elif c in ("caption", "level"): nm, var = dj.pick("caption"); ev.append((t_ + 0.02 - sfx_full(nm, var)[1], nm, var, 0.9, False))
-            elif c == "end": ev += [(t_ + 1.5, "subscribe", 0, 1.0, False), (t_ + 1.85, "bell", 0, 1.0, False)]
+            elif c == "end": ev += [(t_ + 0.2, "bubble", 5, 1.0, False), (t_ + 0.62, "bubble_lo", 6, 0.7, False),
+                                    (t_ + 1.55, "bubble_hi", 7, 0.85, False), (t_ + 1.95, "bubble", 8, 0.6, False)]
             continue
         if e["n"] == "think":                            # Battle: naya AI aaya
             t_ = ev_t(e)
@@ -1862,10 +1866,27 @@ def load_custom(name):
     return x
 
 SILENT = np.zeros(10)
+def bubble(var=0, f0=None, g=0.5):
+    """naram bubble 'blup': upar chadhti sine, chhota sa"""
+    r = np.random.default_rng(100 + var); f0 = f0 or float(r.uniform(480, 640)); d = 0.11
+    t = np.arange(int(d * SR)) / SR; f = f0 * (1 + 1.9 * (1 - np.exp(-t / 0.025)))
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    env = np.minimum(1, t / 0.003) * np.exp(-t / 0.028)
+    x = (np.sin(ph) + 0.18 * np.sin(2 * ph)) * env
+    k = int(0.004 * SR); x[-k:] *= np.linspace(1, 0, k)
+    return x / (np.abs(x).max() + 1e-9) * g
+
 def get_sfx(name, var=0):
-    if name.startswith("sys:"): return SILENT                        # system wali awaaz ab hai hi nahi
-    x = ui_custom(name) if name in UI_NAMES else load_custom(name)
-    return x if x is not None else SILENT
+    if name.startswith("bubble"):                                     # intro / end screen ki bubble awaaz
+        if name in CUSTOM_SFX: return load_custom(name)
+        return bubble(var, {"bubble_hi": 780.0, "bubble_lo": 420.0}.get(name))
+    sys_ = name.startswith("sys:"); base = name[4:] if sys_ else name
+    if base not in UI_NAMES:                                          # mood effects: sirf tumhari upload
+        x = load_custom(base) if not sys_ else None
+        return x if x is not None else SILENT
+    if sys_: return sfx(base, var)
+    x = ui_custom(base)
+    return x if x is not None else sfx(base, var)
 
 def intro_sfx():
     rng = np.random.default_rng(11); out = np.zeros(int((INTRO_S + 0.8) * SR))
@@ -1975,8 +1996,8 @@ def make_audio(clicks_s, events, music_tl, seconds, intro_s, path, vol_click, vo
             if fd > 0: seg[:fd] *= np.linspace(0, 1, fd); seg[-fd:] *= np.linspace(1, 0, fd)
             put(out, seg, a, vol_click)
     else:
-        variants = custom_key_variants() if keys == "toolkeys" else None     # system typing nahi: sirf tumhari
-        for c in (clicks_s if variants else []):
+        variants = (custom_key_variants() if keys == "toolkeys" else None) or key_variants(norm_style("iphone" if keys in ("tool", "toolkeys") else keys))
+        for c in clicks_s:
             put(out, variants[int(rng.integers(0, len(variants)))], c, vol_click)
     if vol_sfx > 0:
         cache, fxb = {}, np.zeros(len(out))
@@ -1987,12 +2008,13 @@ def make_audio(clicks_s, events, music_tl, seconds, intro_s, path, vol_click, vo
         if vduck:                    # awaaz ke shuru ka jhatka poora, baaki voice ke neeche aadha
             fxb *= 1 - 0.5 * (1 - duck_env(len(out), [(a + 0.15, b) for a, b in vduck if b > a + 0.15], 0.1))
         out += fxb
-        if use_intro == "text" and "intro" in CUSTOM_SFX:
-            put(out, load_custom("intro"), 0.0, vol_sfx)
+        if use_intro == "text":
+            if "intro" in CUSTOM_SFX: put(out, load_custom("intro"), 0.0, vol_sfx)
+            else: put(out, get_sfx("bubble", 1), 0.30, vol_sfx); put(out, get_sfx("bubble_hi", 2), 0.95, vol_sfx * 0.7)
     bed = None
     if bgm:
         bed = bgm_track(bgm, seconds, intro_s)
-    # code se bana mood music hata diya: music sirf music/ me upload kiya hua
+    # code se bana mood music band: music sirf music/ me upload kiya hua
     if bed is not None:
         out += bed * duck_env(len(out), duck) if duck else bed
     for st, arr, gain in (extra or []):
@@ -2004,34 +2026,18 @@ def make_audio(clicks_s, events, music_tl, seconds, intro_s, path, vol_click, vo
 
 # ================================================================= INTRO (frames)
 INTRO_HTML = """<!doctype html><meta charset=utf-8><style>
-html,body{margin:0;height:100%%;background:#04060a;overflow:hidden}
+html,body{margin:0;height:100%%;overflow:hidden;background:#07090e}
 body{display:flex;align-items:center;justify-content:center;flex-direction:column;
- background:radial-gradient(ellipse at center,#0b1018 0%%,#04060a 70%%)}
-.scan{position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 2px,transparent 2px 5px);pointer-events:none}
-.w{position:relative;font:800 150px/1 'Roboto Mono','DejaVu Sans Mono',monospace;letter-spacing:.06em;text-transform:uppercase;
- white-space:nowrap;animation:flick %(d)ss steps(1,end) both}
-.w span{display:block}
-.l1,.l2{position:absolute;left:0;top:0}
-.l0{color:#fff}
-.l1{color:#00f0ff;mix-blend-mode:screen;animation:g1 %(d)ss steps(1,end) both}
-.l2{color:#ff2a6d;mix-blend-mode:screen;animation:g2 %(d)ss steps(1,end) both}
-.bar{margin-top:46px;height:6px;background:linear-gradient(90deg,#00f0ff,#ff2a6d);box-shadow:0 0 24px #00f0ff88;
- animation:bar %(d)ss linear both}
-.fade{position:fixed;inset:0;background:#000;animation:fade %(d)ss linear both}
-@keyframes flick{0%%{opacity:0}2%%{opacity:1}7%%{opacity:0}9%%{opacity:1}15%%{opacity:.2}17%%{opacity:1}30%%{opacity:.6}32%%{opacity:1}100%%{opacity:1}}
-@keyframes g1{0%%{transform:translate(-18px,0);clip-path:inset(10%% 0 62%% 0)}6%%{transform:translate(14px,-4px);clip-path:inset(55%% 0 20%% 0)}
- 12%%{transform:translate(-9px,3px);clip-path:inset(30%% 0 45%% 0)}19%%{transform:translate(22px,0);clip-path:inset(5%% 0 80%% 0)}
- 27%%{transform:translate(-12px,0);clip-path:inset(60%% 0 10%% 0)}34%%{transform:translate(8px,2px);clip-path:inset(20%% 0 55%% 0)}
- 42%%{transform:translate(-5px,0);clip-path:inset(40%% 0 40%% 0)}50%%{transform:translate(0,0);clip-path:inset(0 0 100%% 0)}100%%{transform:translate(0,0);clip-path:inset(0 0 100%% 0)}}
-@keyframes g2{0%%{transform:translate(16px,2px);clip-path:inset(45%% 0 30%% 0)}6%%{transform:translate(-20px,0);clip-path:inset(8%% 0 70%% 0)}
- 12%%{transform:translate(11px,-3px);clip-path:inset(62%% 0 8%% 0)}19%%{transform:translate(-14px,0);clip-path:inset(25%% 0 50%% 0)}
- 27%%{transform:translate(19px,0);clip-path:inset(70%% 0 5%% 0)}34%%{transform:translate(-7px,2px);clip-path:inset(12%% 0 66%% 0)}
- 42%%{transform:translate(6px,0);clip-path:inset(35%% 0 42%% 0)}50%%{transform:translate(0,0);clip-path:inset(0 0 100%% 0)}100%%{transform:translate(0,0);clip-path:inset(0 0 100%% 0)}}
-@keyframes bar{0%%{width:0}20%%{width:0}60%%{width:620px}100%%{width:620px}}
-@keyframes fade{0%%{opacity:0}88%%{opacity:0}100%%{opacity:1}}
-</style><div class=scan></div>
-<div class=w><span class=l0>@@NAME@@</span><span class=l1>@@NAME@@</span><span class=l2>@@NAME@@</span></div>
-<div class=bar></div><div class=fade></div>"""
+ background:radial-gradient(ellipse at center,#151b28 0%%,#07090e 75%%)}
+.c{display:flex;align-items:center;flex-direction:column;animation:out %(d)ss linear both}
+.w{font:800 150px/1 'Inter','Segoe UI','DejaVu Sans',sans-serif;color:#fff;letter-spacing:.01em;white-space:nowrap;
+ animation:bub .7s cubic-bezier(.2,1.35,.4,1) .3s both}
+.bar{margin-top:44px;height:8px;border-radius:8px;background:linear-gradient(90deg,#00d2ff,#7a5cff);
+ animation:bar .8s cubic-bezier(.3,1.2,.4,1) .95s both}
+@keyframes bub{0%%{opacity:0;transform:scale(.55);filter:blur(10px)}60%%{opacity:1;filter:blur(0)}100%%{opacity:1;transform:scale(1);filter:blur(0)}}
+@keyframes bar{0%%{width:0;opacity:0}20%%{opacity:1}100%%{width:520px;opacity:1}}
+@keyframes out{0%%{opacity:1}86%%{opacity:1}100%%{opacity:0}}
+</style><div class=c><div class=w>@@NAME@@</div><div class=bar></div></div>"""
 
 def render_intro(browser, ff, fps, dsf, brand=BRAND):
     bw, bh = (1920, 1080) if W >= H else (1080, 1920)

@@ -38,10 +38,11 @@ Claude: ...
 Roles: `User:` `ChatGPT:` (ya `GPT:` / `AI:`) `Gemini:` `Grok:` `Claude:`.
 Dashboard header ki saari `# ...` lines khud likh deta hai.
 
-## Sound effects + music: SIRF TUMHARI
+## Sound effects (beech-beech wale): SIRF TUMHARI
 
-System me koi bhi built-in awaaz nahi hai (na code wali, na koi pack). Video me sirf wahi bajta hai jo tumne upload kiya:
-`sounds/` (sound effects, typing, send, reply) aur `music/` (background music). Kuch upload nahi kiya = wo awaaz band.
+Message ke mood ke hisaab se beech-beech me bajne wale effects ab system ke nahi hain: sirf `sounds/` me tumhari upload ki hui files bajti hain.
+Typing / send / reply ki system awaaz rehti hai (apni upload karo to wo). Background music sirf `music/` se (code wala mood music band).
+Intro aur end screen: smooth text (glitch nahi), naram bubble awaaz ke saath. `sounds/bubble.mp3` daalo to wahi bajegi.
 
 | Kaise | Kya hota hai |
 |---|---|
@@ -65,13 +66,13 @@ Dashboard ke **⌨️ Chat Sounds** panel me har ek ke liye **System** ya **Meri
 | `sounds/recv_chatgpt.mp3` | ChatGPT ka reply aane par |
 
 ```
-# typing_sound = custom      (ya off = typing ki awaaz band)
+# typing_sound = custom      (ya system -> # keys = iphone / mech / thock / bubble / typewriter / glass)
 # typing_mode = loop         (tool jaisa, recording loop me)   ya   keys (recording se kaate click, har akshar par ek)
-# send_sound = custom        (ya off)
-# recv_sound = custom        (ya off)
+# send_sound = custom        (ya system)
+# recv_sound = custom        (ya system)
 # send_vol = 1.2             # recv_vol = 0.8     (100% = 1.0)
 ```
-Kuch na likho to: file repo me hai to wahi bajti hai, nahi hai to koi awaaz nahi. Tumhari sound ki zor apne aap baaki awaazon jitni kar di jaati hai.
+Kuch na likho to: file repo me hai to wahi bajti hai, warna system wali. Tumhari sound ki zor apne aap baaki awaazon jitni kar di jaati hai.
 
 ## Voice + emotion (free)
 
