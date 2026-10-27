@@ -83,6 +83,15 @@ Kabhi-kabhi ungli galat key par (chhote message me bhi) -> turant mita ke sahi.
 User ka chhota message (`hey`, `ok`) = ChatGPT turant jawab deta hai. Messages ka time bhi har baar alag: ChatGPT ka lamba reply = user zyada der padhta hai phir likhta hai, lamba reply = ChatGPT zyada sochta hai.
 `# human = off` = purana seedha ek jaisa flow. (Purana `laptop` mode hata diya.)
 
+## Smart Zoom (naya, default ON)
+
+Khatarnak / scary / important message par camera zoom: user type kar raha ho to sirf typing box (caret ke saath chalta hai),
+typing khatam hote hi wapas normal. ChatGPT ka aisa reply aaye to us reply par zoom. Har baar alag:
+halka (dheere), tez, ya bahut khatarnak ho to **turant** jhatke se, aur usme emoji (😱 💀 🔪 ...) ho to emoji par full zoom.
+Apne aap pehchanta hai: shabd (kill, watching, location, secret, police, who are you, i know where...), CAPS, `!!`, darr wale emoji, mood.
+Khud batana ho: `{zoom}` (normal) `{zoom1}` (halka) `{zoom3}` (turant) `{zoom_emoji}` (emoji par bhi) `{nozoom}` (zoom nahi).
+`# zoom = off` = band. Intro ke baad ab sirf 0.5 sec rukta hai, phir typing (`# start_delay = 1.5` se badlo).
+
 ## Intro / end screen ka size
 
 `# intro_text = Glitch Roast`  `# intro_size = 7.8` (screen ki chaudai ka %, 3-16). Bada ho to apne aap fit.
