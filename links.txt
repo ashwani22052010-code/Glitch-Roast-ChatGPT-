@@ -13,3 +13,4 @@ ai_stalker,https://github.com/ashwani22052010-code/Glitch-Roast-ChatGPT-/release
 test_smooth,https://github.com/ashwani22052010-code/Glitch-Roast-ChatGPT-/releases/download/v-40491574177-1/test_smooth.mp4
 test_human,https://github.com/ashwani22052010-code/Glitch-Roast-ChatGPT-/releases/download/v-40493611228-1/test_human.mp4
 test_quick,https://github.com/ashwani22052010-code/Glitch-Roast-ChatGPT-/releases/download/v-40495676507-1/test_quick.mp4
+test_zoom,https://github.com/ashwani22052010-code/Glitch-Roast-ChatGPT-/releases/download/v-40499391841-1/test_zoom.mp4
