@@ -40,7 +40,9 @@ Dashboard header ki saari `# ...` lines khud likh deta hai.
 
 ## Sound effects (free, apne aap)
 
-~85 awaazein code se hi banti hain (koi download / paisa nahi). Har message ka feel dekh kar (emoji, shabd, mood, voice ka emotion)
+**Asli awaazein:** `sounds/real/` me ~270 asli recordings (79 naam, har naam ke kai versions) hain, sab **CC0 / public domain**
+(Kenney, OpenGameArt, BigSoundBank jaise free packs; list `sounds/real/CREDITS.md` me). YouTube monetization par koi copyright claim nahi.
+Har message ka feel dekh kar (emoji, shabd, mood, voice ka emotion)
 usse milti awaaz bajti hai: joke ke baad boing / ba-dum-tss / honk, roast par boom / airhorn, gusse me dhamaka / punch, sad me piano / violin,
 darr me horror cheekh / dhak-dhak / darwaza, 💰 par ka-ching, ❌ par wah-wah-waaah, 😬 par jhingur... Har group me kai awaazein hain,
 patte ki tarah shuffle: jab tak group ki saari na baj jaayein koi dobara nahi, aur har baar thodi alag (pitch / speed).
@@ -65,6 +67,13 @@ Ek khaas awaaz: `{boom}` `{boom2}` `{airhorn}` `{rimshot}` `{boing}` `{doing}` `
 `{glitch}` `{crickets}` `{bloop}` `{beeps}` `{error}` `{harp}` `{chime}` `{heart_soft}` `{whoosh}` `{swoosh}` `{boxing_bell}` `{vs_hit}`
 `{plink}` `{tap}` `{shimmer}` `{blip}` `{blip_up}` `{ponder}` (halke) &nbsp;·&nbsp; group: `{neutral}` `{question}` `{accent}`
 `{siren}` `{dial}` `{phone_ring}` `{knock}` &nbsp;·&nbsp; group: `{police}` (🚨 🚓 FBI) `{phone}` (📞) `{door}` (🚪)
+
+`# sfx_real = only` (default) = sirf asli recordings bajti hain; jis tag ki asli awaaz abhi nahi hai wo chup rehta hai (log me naam aata hai).
+`# sfx_real = mix` = asli ho to asli, warna code wali. `# sfx_real = off` = sirf purani code wali.
+Asli abhi nahi: airhorn, honk, rimshot, crickets, applause, siren, dial, phone_ring, cash, sad_trombone, heartbeat, sting, sting_low,
+drumroll, xylo_up/down, harp, braam, bass_drop, alarm, deflate, ghost, swell_hit, dun_dun, piano_sad, sonar, wind, ring, heart_soft, vibes.
+Inhe Pixabay se download karke usi naam se `sounds/` me daalo (jaise `sounds/airhorn.mp3`), ya ek naam ke kai versions
+`sounds/real/airhorn/01.mp3`, `02.mp3` ... me.
 
 `{nosfx}` = us message par koi effect nahi. `# sfx = 0.6` = sab effects dheeme (`off` = band), `# sfx_auto = off` = sirf tag wale.
 Apni awaaz: `sounds/boom.mp3` daalo to built-in `boom` ki jagah wahi bajegi; `sounds/funny_2.mp3` jaisa naam = `funny` group me ek aur option.

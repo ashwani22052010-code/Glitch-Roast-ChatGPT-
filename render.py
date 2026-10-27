@@ -234,7 +234,7 @@ async ([items, o, ui]) => {
 }
 """
 
-OPT_RE = re.compile(r"^\s*#\s*(typing|speed|human|laptop|light|accent|ratio|view|ui|music|sfx|sfx_auto|click|keys|typing_sound|typing_mode|send_sound|recv_sound|send_vol|recv_vol|intro|shorts|auto|end|bgm|bgm_start|bgm_vol|quality|fps|intro_len|end_len|intro_vol|end_vol|meme_vol|"
+OPT_RE = re.compile(r"^\s*#\s*(typing|speed|human|laptop|light|accent|ratio|view|ui|music|sfx|sfx_auto|sfx_real|click|keys|typing_sound|typing_mode|send_sound|recv_sound|send_vol|recv_vol|intro|shorts|auto|end|bgm|bgm_start|bgm_vol|quality|fps|intro_len|end_len|intro_vol|end_vol|meme_vol|"
                     r"gpt_delay|opp_delay|user_delay|send_delay|chat_size|think_gpt|think_gemini|think_grok|think_claude|start_delay|"
                     r"voice|voice_emotion|voice_user|voice_ai|voice_gemini|voice_grok|voice_claude|voice_user_rate|voice_user_pitch|voice_ai_rate|voice_ai_pitch|voice_vol)\s*=\s*(\S+)\s*$", re.I)
 TEXT_OPT_RE = re.compile(r"^\s*#\s*(intro_text|end_text|end_sub)\s*=\s*(.+?)\s*$", re.I)
@@ -1603,11 +1603,45 @@ SFX_NO_TONE = {"comic": ("sad", "cry", "scared", "scary", "angry", "shout"), "br
 BATTLE_COMBOS = [[("vs_hit", 0.0), ("boxing_bell", 0.45)], [("swell_hit", 0.0), ("boxing_bell", 0.5)],
                  [("sword", 0.0), ("braam", 0.3)], [("riser", 0.0), ("impact_metal", 0.0), ("boxing_bell", 0.4)]]
 
+# ----------------------------------------------------------------- ASLI SOUNDS (sounds/real/<naam>/*.ogg - CC0 recordings)
+# '# sfx_real = only' (default jab asli sounds hain): sirf asli awaaz, jiski asli nahi wo effect nahi bajega
+# '# sfx_real = mix': asli ho to asli, warna code wali   |   '# sfx_real = off': sirf code wali
+REAL_DIR = HERE / "sounds" / "real"
+def _scan_real():
+    out = {}
+    if REAL_DIR.is_dir():
+        for d in sorted(REAL_DIR.iterdir()):
+            fs = sorted(f for f in d.iterdir() if f.suffix.lower() in SFX_EXT) if d.is_dir() else []
+            if fs: out[d.name.lower()] = fs
+    return out
+REAL_SFX = _scan_real()
+REAL_ALIAS = {"hit": "impact", "bell": "ding", "subscribe": "ding_soft"}
+SFX_MODE = ["real" if REAL_SFX else "code"]
+ANCHOR_PEAK, ANCHOR_END = {"swell_hit", "vs_hit", "zoom_hit", "punch"}, {"riser"}
+
+def sfx_have(name):
+    """is mode me ye awaaz baj sakti hai?"""
+    return name in CUSTOM_SFX or SFX_MODE[0] != "real" or REAL_ALIAS.get(name, name) in REAL_SFX
+
+def _load_real(f):
+    raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", str(f), "-t", "8", "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], capture_output=True).stdout
+    return np.frombuffer(raw, dtype="<f4").astype(float)
+
 _sfx_cache = {}
 def sfx_full(name, var=0):
     """naam -> (awaaz, anchor sec). anchor = awaaz ka wo pal jo message ke saath milna chahiye (jaise riser ka end)"""
-    key = (name, var)
+    key = (name, var, SFX_MODE[0])
     if key in _sfx_cache: return _sfx_cache[key]
+    rn = REAL_ALIAS.get(name, name)
+    if SFX_MODE[0] != "code" and rn in REAL_SFX:
+        fs = REAL_SFX[rn]; x = _load_real(fs[var % len(fs)])
+        if len(x) > 64:
+            x = sx_level(x, 0.10 if name in SFX_RAW else 0.12, 0.8) * SFX_GAIN.get(name, 1.0)
+            w = int(0.01 * SR); env = np.convolve(np.abs(x), np.ones(w) / w, mode="same")
+            anc = len(x) / SR if rn in ANCHOR_END else (float(np.argmax(env)) / SR if rn in ANCHOR_PEAK else 0.0)
+            _sfx_cache[key] = (x, anc); return _sfx_cache[key]
+    if SFX_MODE[0] == "real" and name not in SFX_RAW:
+        _sfx_cache[key] = (np.zeros(10), 0.0); return _sfx_cache[key]     # asli nahi hai -> chup
     fn = SFX_LIB.get(name)
     if fn is None:
         pool = SFX_POOLS.get(name)
@@ -1622,7 +1656,7 @@ def sfx_full(name, var=0):
 
 def sfx(name, var=0): return sfx_full(name, var)[0]
 
-TAG_NAMES = sorted(set(MOODS) | set(SFX_POOLS) | {n for n in SFX_LIB if n not in SFX_RAW or n in ("whoosh", "hit", "bell", "pop2")}
+TAG_NAMES = sorted(set(MOODS) | set(SFX_POOLS) | set(REAL_SFX) | {n for n in SFX_LIB if n not in SFX_RAW or n in ("whoosh", "hit", "bell", "pop2")}
                    | set(CUSTOM_SFX) | {"nosfx"}, key=len, reverse=True)
 TAG_RE = re.compile(r"\s*\{\s*(%s)\s*\}" % "|".join(map(re.escape, TAG_NAMES)), re.I)
 
@@ -1633,7 +1667,7 @@ class SfxDJ:
     def pool(self, grp):
         if grp in CUSTOM_SFX: return [grp]                       # sounds/funny.mp3 -> sirf tumhari file
         mine = sorted(n for n in CUSTOM_SFX if re.fullmatch(re.escape(grp) + r"[_-]?\w+", n) and n not in SFX_LIB)
-        return list(SFX_POOLS.get(grp, [])) + mine               # sounds/funny_2.mp3 -> group me ek aur option
+        return [n for n in SFX_POOLS.get(grp, []) if sfx_have(n)] + mine     # sounds/funny_2.mp3 -> group me ek aur option
     def pick(self, grp):
         pool = self.pool(grp)
         if not pool: return None
@@ -1702,7 +1736,9 @@ def plan_sfx(cfg, S, plan, sh, t0):
         if e["n"] == "think":                            # Battle: naya AI aaya
             t_ = ev_t(e)
             if e.get("first"):
-                for nm, off in BATTLE_COMBOS[zlib.crc32(cfg["name"].encode()) % len(BATTLE_COMBOS)]:
+                combo = [c for c in BATTLE_COMBOS[zlib.crc32(cfg["name"].encode()) % len(BATTLE_COMBOS)] if sfx_have(c[0])] or \
+                        [c for c in (("impact_metal", 0.0), ("boxing_bell", 0.4)) if sfx_have(c[0])]
+                for nm, off in combo:
                     var = dj.use(nm)[1]; ev.append((t_ + off - sfx_full(nm, var)[1], nm, var, 0.95, False))
             else:
                 nm, var = dj.pick("transition"); ev.append((t_ - sfx_full(nm, var)[1], nm, var, 0.8, False))
@@ -1716,8 +1752,10 @@ def plan_sfx(cfg, S, plan, sh, t0):
         prev, has_start = last_feel, False
         for j, (tgt, mine) in enumerate(targets):
             grp = tgt in SFX_POOLS or (tgt in MOODS)
-            got = dj.pick(tgt) if grp else dj.use(tgt) if (tgt in SFX_LIB or tgt in CUSTOM_SFX) else None
-            if not got: continue
+            got = dj.pick(tgt) if grp else dj.use(tgt) if ((tgt in SFX_LIB or tgt in CUSTOM_SFX or tgt in REAL_SFX) and sfx_have(tgt)) else None
+            if not got:
+                if mine: S.setdefault("_nofx", []).append(tgt)
+                continue
             nm, var = got; x, anc = sfx_full(nm, var) if nm not in CUSTOM_SFX else (None, 0.0)
             after = nm in SFX_AFTER
             if tgt == "funny":                           # "lol / 😂" message ke shuru me = jawab me hasi -> turant
@@ -2904,6 +2942,8 @@ def settings(script, a):
                   typing=max(0.1, min(3.0, fl("typing", 1.0))), speed=max(0.25, min(3.0, fl("speed", 1.0))),
                   human=on("human"), laptop=on("laptop"), end=end_on, endText=opts.get("end_text") or "Thanks for watching!",
                   brand=opts.get("end_sub") or brand, start=int(fl("start_delay", 2.0) * 1000))
+    sr_ = str(opts.get("sfx_real", "")).lower()
+    SFX_MODE[0] = "code" if sr_ in ("off", "no", "code", "0", "false") else "mix" if sr_ in ("mix", "on", "both") else ("real" if REAL_SFX else "code")
     S = dict(
         voice=voice, vtexts=vtexts, vroles={k: r for k, (r, _) in vtexts.items()}, vemo=vemo,
         stags=stags, sfx_auto=not off("auto") and not off("sfx_auto"),
@@ -2970,7 +3010,8 @@ def finish(cfg, S, plan, video_path, out_dir):
         mood = S["moods"].get(e.get("k")) if e["n"] in ("send", "show") else None
         if mood in MUSIC_OF: music_tl.append((sh((e["t"] - t0) / 1000), MUSIC_OF[mood]))
     fx_used = [f"{tm:.1f}s {nm}" for tm, nm, *r in events if r and r[-1]]
-    if fx_used: print(f"[{name}] sound effects ({len(fx_used)}): " + ", ".join(fx_used), flush=True)
+    if fx_used: print(f"[{name}] sound effects ({len(fx_used)}, mode {SFX_MODE[0]}): " + ", ".join(fx_used), flush=True)
+    if S.get("_nofx"): print(f"[{name}] in tags ki asli awaaz abhi repo me nahi (sounds/real/<naam>/ me daalo): {sorted(set(S['_nofx']))}", flush=True)
     clicks_s = [sh(c / 1000) for c in plan["clicks"]]
     seconds = (n_intro + k + n_end) / fps
     for gp in gaps:                 # meme ki apni awaaz + music dabana

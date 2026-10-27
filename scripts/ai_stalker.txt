@@ -1,4 +1,4 @@
-# v2: music loop bina gap ke
+# v3: asli (real) sound effects
 # quality = 2k
 # fps = 30
 # ratio = 16:9
