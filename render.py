@@ -1894,6 +1894,9 @@ def bgm_track(b, seconds, intro_s):
     raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-ss", str(b["start"]), "-i", b["path"],
                           "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], capture_output=True).stdout
     x = np.frombuffer(raw, dtype="<f4").astype(float)
+    if len(x):
+        nz = np.where(np.abs(x) > np.abs(x).max() * 0.01)[0]
+        if len(nz): x = x[nz[0]:nz[-1] + 1]
     n = int(seconds * SR)
     if len(x) < SR:
         print("(bgm file se audio nahi mila)")

@@ -1,3 +1,4 @@
+# v2: music loop bina gap ke
 # quality = 2k
 # fps = 30
 # ratio = 16:9
