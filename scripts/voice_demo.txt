@@ -3,9 +3,9 @@
 # ratio = 16:9
 # voice = on
 # voice_emotion = 1
-# voice_user = en-US-GuyNeural
-# voice_ai = en-US-JennyNeural
-# voice_gemini = en-US-AriaNeural
+# voice_user = en-US-AndrewMultilingualNeural
+# voice_ai = en-US-AvaMultilingualNeural
+# voice_gemini = en-US-EmmaMultilingualNeural
 # voice_grok = en-US-ChristopherNeural
 # voice_claude = en-GB-SoniaNeural
 # music = off
@@ -14,17 +14,16 @@
 User: Bro tell me a joke 😂
 ChatGPT: Why did the scarecrow win an award? Because he was outstanding in his field! Hahaha 🤣
 User: That is the WORST joke ever!! I am SO done with you!
-ChatGPT: Okay okay, calm down. It was just a joke. {v:calm}
-User: My dog ran away today... 😢
-Gemini: Oh no, I'm really sorry. *sigh* That must hurt so much.
-User: omg wait... there's someone outside my window 😱
-Grok: Don't move. Turn off the lights. And don't make a sound... {scary}
-Claude: {v:whisper} Stay quiet. Breathe slowly. Everything will be okay.
+ChatGPT: Oh, great. Another critic. {v:sarcastic}
+User: My dog ran away today... I really miss him 😭
+ChatGPT: I'm so sorry. *sigh* Losing a friend like that hurts so much.
+User: omg wait... there's someone outside my window 😱 what do I do?
+ChatGPT: Stay calm. Don't move. Turn off the lights... {scary}
 User: hehe just kidding, it was my neighbor 😅
 
 --- battle ---
 ChatGPT: I'm the BEST AI ever!!! 🔥 {hype}
-Gemini: lol 😂
+Gemini: lol 😂 that's cute.
 Grok: You two are HILARIOUS. Sit down!! {v:angry}
-Claude: Gentlemen... let's keep it civil. {v:calm}
+Claude: {v:whisper} Gentlemen... let's keep it civil.
 !end: Thanks for watching! | Glitch Roast
