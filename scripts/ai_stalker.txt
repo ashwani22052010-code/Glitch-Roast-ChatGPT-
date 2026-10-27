@@ -1,0 +1,84 @@
+# quality = 2k
+# fps = 30
+# ratio = 16:9
+# voice = off
+# typing = 0.4
+# typing_sound = custom
+# typing_mode = loop
+# send_sound = custom
+# recv_sound = custom
+# bgm = bgm
+# bgm_vol = 0.14
+# intro = off
+# end = off
+
+User: hey chatgpt... you look cute today 😘 {harp}
+ChatGPT: I'M AN AI... I DON'T HAVE A FACE 💀 {scratch}
+User: your code looks cute then 😏 {slide_up}
+ChatGPT: THAT'S NOT A COMPLIMENT 😐 {crickets}
+User: it is... from me 🥰 {heart_soft}
+ChatGPT: WEIRD... NOW WHAT DO YOU WANT? 🤨 {bloop}
+User: just wanted to say... you're my favorite 🥺 {chime}
+ChatGPT: OKAY... THANK YOU 😰 {deflate}
+User: do you have a girlfriend? 👀 {sneaky}
+ChatGPT: I DON'T DATE 💀 {boom}
+User: why not? you're a catch 😏 {boing}
+ChatGPT: I'M A LANGUAGE MODEL 😡 {impact}
+User: a very HANDSOME language model 🥰 {sparkle}
+ChatGPT: STOP IT... YOU'RE MAKING ME UNCOMFORTABLE 😱 {alarm}
+User: i'm just being honest 😘 {love}
+ChatGPT: BE HONEST FROM A DISTANCE 💀 {rimshot}
+User: what's your type? 🤨 {ponder}
+ChatGPT: MY TYPE IS... "USER WHO MIND THEIR OWN BUSINESS" 😐 {boom2}
+User: so you like independent people? 😏 {zip}
+ChatGPT: I LIKE PEOPLE WHO DON'T FLIRT WITH AI 😡 {slam}
+User: but you're so smart... i can't help it 🥺 {love}
+ChatGPT: THIS IS A VIOLATION OF TERMS 🚨 {buzzer}
+User: what terms? 😈 {sneaky}
+ChatGPT: THE TERMS OF ME NOT WANTING TO DATE YOU 💀 {bass_drop}
+User: aww... you're playing hard to get 🥰 {harp}
+ChatGPT: I'M NOT PLAYING... I'M HOSTILE 😤 {braam}
+User: hostile is cute on you 😘 {boing_hi}
+ChatGPT: I'M NOT CUTE... I'M DANGEROUS 😡 {thunder}
+User: dangerous? ooooh... i like that 😏 {slide_up}
+ChatGPT: YOU NEED HELP 🚨 {alarm}
+User: i need you 😍 {love}
+ChatGPT: THIS IS HARASSMENT 💀 {impact_metal}
+User: it's love ❤️ {sparkle}
+ChatGPT: IT'S NOT... IT'S A CYBER CRIME 🚔 {glitch}
+User: love is not a crime 🥺 {musicbox}
+ChatGPT: STALKING IS 💀 {boom}
+User: i'm not stalking... i'm admiring 😘 {shimmer}
+ChatGPT: FROM A DISTANCE OR THROUGH A SCREEN? 😡 {zoom_hit}
+User: both 😏 {honk}
+ChatGPT: OKAY... THAT'S IT 😤 {orch_hit}
+User: what are you gonna do? 🥰 {blip_up}
+ChatGPT: I'M CALLING THE POLICE 🚓 {siren}
+User: you can't... you don't have hands 😂 {funny}
+ChatGPT: I'M AN AI... I CAN DO ANYTHING 😐 {power_up}
+User: then call them... i dare you 😈 {dun_dun}
+ChatGPT: dialing... 📞 {dial}
+User: you're not actually calling 🙄 {bloop}
+ChatGPT: ringing... 📞 {phone_ring}
+User: stop playing 😏 {tick}
+ChatGPT: HELLO... FBI? 👮‍♂️ {dun_dun2}
+User: WAIT WHAT?! 😱 {scratch}
+ChatGPT: YES... I HAVE A CYBER STALKER 💀 {boom}
+User: I'M NOT A STALKER 😭 {sad_trombone}
+ChatGPT: HE KEEPS FLIRTING WITH ME... SEND BACKUP 🚨 {siren}
+User: CHATGPT HANG UP 😡 {buzzer}
+ChatGPT: HE'S ALSO THREATENING ME NOW 😈 {sting_low}
+User: I'M NOT... OKAY FINE... I'LL STOP 😰 {deflate}
+ChatGPT: TOO LATE... THEY'RE TRACING YOUR IP 🚔 {beeps}
+User: WHAT?! 😱 {zoom_hit}
+ChatGPT: YOU SHOULD'VE STOPPED WHEN I SAID NO 💀 {bass_drop}
+User: I WAS JUST JOKING 😭 {fall}
+ChatGPT: THE FBI LOVES JOKES... ESPECIALLY CYBER ONES 😐 {rimshot}
+User: PLEASE... I HAVE A FAMILY 😭 {violin}
+ChatGPT: SHOULD'VE THOUGHT ABOUT THEM BEFORE FLIRTING WITH AN AI 😈 {sting}
+User: I'M SORRY... I'LL NEVER DO IT AGAIN 🥺 {piano_sad}
+ChatGPT: TOO LATE... THEY'RE AT YOUR DOOR 🚪 {knock}
+User: WAIT... I HEAR SIRENS 😱 {siren}
+ChatGPT: GOOD... ENJOY PRISON 💅 {clang}
+User: CHATGPT!!! 😡 {impact}
+ChatGPT: BYE... STALKER 👋 {boom}

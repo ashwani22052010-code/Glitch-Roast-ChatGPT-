@@ -1455,6 +1455,43 @@ def _s_vs(rng, nm):                          # battle ka "VS" dhamaka
     d = 0.8; t = sx_t(d)
     return sx_mix([(0, sx_cymbal(rng, d, 2.5)[::-1] * (t / d) ** 2, 0.6), (d, _s_impact(rng, "impact_metal"), 1.0)]), d
 
+# ----------------------------------------------------------------- POLICE / PHONE / DARWAZA
+@_reg("siren", gain=0.85)
+def _s_siren(rng, nm):                       # police siren (do gaadiyan, paas aati hui)
+    d = 3.4; t = sx_t(d); x = np.zeros(len(t))
+    for k, (rate, lo, hi, g) in enumerate(((rng.uniform(0.55, 0.7), 520, 1350, 1.0), (rng.uniform(0.8, 1.0), 600, 1250, 0.55))):
+        f = (lo + hi) / 2 + (hi - lo) / 2 * np.sin(2 * np.pi * rate * t - np.pi / 2 + k * 1.3)
+        x += g * (sx_osc(f) + 0.35 * sx_osc(2 * f) + 0.12 * sx_osc(3 * f))
+    x = sx_lp(x, 3500) * np.interp(t, [0, 0.5, d - 0.9, d], [0.15, 1, 1, 0])
+    return sx_rev(x, 1.5, 0.3)
+
+@_reg("dial", gain=0.7)
+def _s_dial(rng, nm):                        # phone number dial (tone wali beeps)
+    parts, tm = [], 0.0
+    for _ in range(int(rng.integers(6, 9))):
+        d = 0.11; t = sx_t(d)
+        x = (sx_osc(float(sx_pick(rng, [697, 770, 852, 941])), n=len(t)) + sx_osc(float(sx_pick(rng, [1209, 1336, 1477])), n=len(t)))
+        parts.append((tm, x * np.minimum(1, t / 0.003) * np.minimum(1, (d - t) / 0.003), 0.5)); tm += d + rng.uniform(0.06, 0.12)
+    return sx_mix(parts)
+
+@_reg("phone_ring", gain=0.75)
+def _s_ring(rng, nm):                        # phone ki ghanti ja rahi hai (tring... tring...)
+    parts = []
+    for i in range(2):
+        t = sx_t(1.0); x = (sx_osc(440.0, n=len(t)) + sx_osc(480.0, n=len(t))) * np.minimum(1, t / 0.01) * np.minimum(1, (1.0 - t) / 0.01)
+        parts.append((i * 1.7, sx_bp(x, 1200, 0.4), 0.5))
+    return sx_mix(parts)
+
+@_reg("knock")
+def _s_knock(rng, nm):                       # darwaze par khat-khat
+    parts = []
+    for st in ((0, 0.19, 0.38) if rng.random() < 0.5 else (0, 0.17, 0.5, 0.67)):
+        t = sx_t(0.25); f = rng.uniform(130, 170)
+        y = (sx_osc(f * (1 + 0.3 * np.exp(-t * 40))) * np.exp(-t * 28) + sx_un(sx_bp(sx_noise(len(t), rng), 900, 1.2)) * np.exp(-t * 45) * 0.7
+             + sx_un(sx_hp(sx_noise(len(t), rng), 2500)) * np.exp(-t * 300) * 0.3) * np.minimum(1, t / 0.0008)
+        parts.append((st, y, rng.uniform(0.85, 1.0)))
+    return sx_rev(sx_mix(parts), 0.6, 0.25)
+
 # ----------------------------------------------------------------- HALKE (normal message / sawaal)
 @_reg("plink", "tap", "shimmer", "blip", "blip_up", "ponder", gain=0.75)
 def _s_light(rng, nm):
@@ -1513,6 +1550,9 @@ SFX_POOLS = {
     "evil":     ["braam", "sting_low", "toll", "thunder"],
     "transition": ["whoosh", "whoosh_fast", "whoosh_deep", "swoosh", "whoosh_air"],
     "caption":  ["pop2", "swoosh", "ding_soft", "whoosh_fast"],
+    "police":   ["siren", "alarm"],
+    "phone":    ["dial", "phone_ring"],
+    "door":     ["knock", "creak"],
     "neutral":  ["plink", "tap", "shimmer", "blip", "pop2", "whoosh_air", "ding_soft", "pops"],
     "question": ["blip_up", "ponder", "plink", "zip"],
     "accent":   ["whoosh_fast", "slam", "zoom_hit", "orch_hit", "impact", "swoosh", "punch"],
@@ -1522,10 +1562,13 @@ SFX_POOLS = {
 SFX_AFTER = {"boing", "doing", "slide_up", "slide_down", "honk", "honk2", "bonk", "rimshot", "pops", "squeak", "xylo_up", "zip", "zip_down",
              "boing_hi", "boing0", "boom", "boom2", "airhorn", "burn", "explosion", "slap", "ring", "glass", "bass_drop", "sad_trombone",
              "deflate", "fall", "xylo_down", "buzzer", "crickets", "bloop", "wind", "applause", "tada", "ding2", "coin", "coins", "cash",
-             "fireworks", "dun_dun", "dun_dun2", "drumroll", "laser"}
+             "fireworks", "dun_dun", "dun_dun2", "drumroll", "laser", "knock"}
 # keyword / emoji -> group   (tone: comic / bright = khush wale, sad ya darr wale message par nahi lagte)
 SFX_TRIGGERS = [(re.compile(rx, re.I), grp, tone) for rx, grp, tone in (
     (r"\U0001F941|\bdrum\s*roll\b", "drumroll", "neutral"),
+    (r"[\U0001F6A8\U0001F693\U0001F694\U0001F46E]|\b(?:police|cops?|siren|fbi|arrest(?:ed)?)\b", "police", "neutral"),
+    (r"[\U0001F4DE\u260E\U0001F4F1]|\b(?:dialing|calling|ringing|phone call)\b", "phone", "neutral"),
+    (r"\U0001F6AA|\b(?:knock(?:ing)?|at your door)\b", "door", "neutral"),
     (r"\U0001F3A4|\bmic\s*drop\b", "dead", "neutral"),
     (r"\U0001F480|☠|\b(?:i'?m|im) dead\b|\bbruh+\b", "dead", "comic"),
     (r"\bemotional damage\b", "ring", "comic"),
@@ -1693,7 +1736,7 @@ def plan_sfx(cfg, S, plan, sh, t0):
             if not mine and when - prev < 0.6: continue          # bahut paas-paas nahi
             light = tgt in ("neutral", "question")
             ev.append((when, nm, var, 0.7 if light else 0.85, True)); last_feel = max(last_feel, when); has_start |= not after
-        if targets and not has_start and emo in ("shout", "angry", "excited", "surprise") and S.get("sfx_auto", True):
+        if targets and not any(m for _, m in targets) and not has_start and emo in ("shout", "angry", "excited", "surprise") and S.get("sfx_auto", True):
             got = dj.pick("accent")                      # zor wala message: aate hi ek jhatka bhi
             if got:
                 nm, var = got; when = max(0.0, (t_ + 0.02 if e["n"] == "send" else t_ - 0.02) - sfx_full(nm, var)[1])

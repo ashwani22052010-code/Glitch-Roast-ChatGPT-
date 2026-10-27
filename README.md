@@ -64,6 +64,7 @@ Ek khaas awaaz: `{boom}` `{boom2}` `{airhorn}` `{rimshot}` `{boing}` `{doing}` `
 `{coins}` `{cash}` `{fireworks}` `{power_up}` `{power_down}` `{laser}` `{drumroll}` `{orch_hit}` `{scratch}` `{zoom_hit}` `{ding}` `{ding2}`
 `{glitch}` `{crickets}` `{bloop}` `{beeps}` `{error}` `{harp}` `{chime}` `{heart_soft}` `{whoosh}` `{swoosh}` `{boxing_bell}` `{vs_hit}`
 `{plink}` `{tap}` `{shimmer}` `{blip}` `{blip_up}` `{ponder}` (halke) &nbsp;·&nbsp; group: `{neutral}` `{question}` `{accent}`
+`{siren}` `{dial}` `{phone_ring}` `{knock}` &nbsp;·&nbsp; group: `{police}` (🚨 🚓 FBI) `{phone}` (📞) `{door}` (🚪)
 
 `{nosfx}` = us message par koi effect nahi. `# sfx = 0.6` = sab effects dheeme (`off` = band), `# sfx_auto = off` = sirf tag wale.
 Apni awaaz: `sounds/boom.mp3` daalo to built-in `boom` ki jagah wahi bajegi; `sounds/funny_2.mp3` jaisa naam = `funny` group me ek aur option.
