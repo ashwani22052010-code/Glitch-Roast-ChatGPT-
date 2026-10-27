@@ -235,7 +235,7 @@ async ([items, o, ui]) => {
 
 OPT_RE = re.compile(r"^\s*#\s*(typing|speed|human|laptop|light|accent|ratio|view|ui|music|sfx|click|keys|intro|shorts|auto|end|bgm|bgm_start|bgm_vol|quality|fps|intro_len|end_len|intro_vol|end_vol|meme_vol|"
                     r"gpt_delay|opp_delay|user_delay|send_delay|chat_size|think_gpt|think_gemini|think_grok|think_claude|start_delay|"
-                    r"voice|voice_user|voice_ai|voice_gemini|voice_grok|voice_claude|voice_user_rate|voice_user_pitch|voice_ai_rate|voice_ai_pitch|voice_vol)\s*=\s*(\S+)\s*$", re.I)
+                    r"voice|voice_emotion|voice_user|voice_ai|voice_gemini|voice_grok|voice_claude|voice_user_rate|voice_user_pitch|voice_ai_rate|voice_ai_pitch|voice_vol)\s*=\s*(\S+)\s*$", re.I)
 TEXT_OPT_RE = re.compile(r"^\s*#\s*(intro_text|end_text|end_sub)\s*=\s*(.+?)\s*$", re.I)
 MSG_RE = re.compile(r"^\s*(user|you|chatgpt|gpt|ai|assistant|gemini|grok|claude)\s*:\s*(.*)$", re.I)
 ROLE_OF = {"user": "user", "you": "user", "chatgpt": "chatgpt", "gpt": "chatgpt", "ai": "chatgpt", "assistant": "chatgpt",
@@ -404,7 +404,7 @@ def auto_mood(text):
 def parse_script(path):
     """script -> (items, opts, moods, memes, {k:(role, voice text)})
     items: [{k, role, raw, phase}] ya {role:'cmd', cmd, dur, t}"""
-    opts, items, tags, texts, memes, phase = {}, [], {}, {}, {}, 1
+    opts, items, tags, texts, memes, phase, vemo = {}, [], {}, {}, {}, 1, {}
     k = -1
     for line in Path(path).read_text(encoding="utf-8-sig").splitlines():
         line = fix_mojibake(line).rstrip()
@@ -427,6 +427,8 @@ def parse_script(path):
             continue
         else:
             body = line.strip()
+        mv = list(VOICE_TAG_RE.finditer(body))
+        if mv: vemo[k] = mv[-1].group(1).lower(); body = VOICE_TAG_RE.sub("", body)
         found = TAG_RE.findall(body)
         if found: tags[k] = found[-1].lower()
         body = TAG_RE.sub("", body).rstrip()
@@ -447,7 +449,7 @@ def parse_script(path):
                 g = auto_mood(t)
                 if g: moods[i] = g
     vraw = {it["k"]: (it["role"], re.sub(r"\[\s*\d+\s*\]", " ", it["raw"])) for it in items if it.get("k") is not None}
-    return items, opts, moods, memes, vraw
+    return items, opts, moods, memes, vraw, vemo
 
 def find_html(name):
     for p in (HERE / name, HERE / "tool.html"):
@@ -970,35 +972,312 @@ def tts_clean(t):
     t = re.sub(r"[_#>~|]+", " ", t)
     return re.sub(r"\s+", " ", t).strip()
 
+# ================================================================= VOICE + EMOTION (free: edge-tts + jugaad)
+# Microsoft ki free awaaz me "angry / cheerful" style allowed nahi hai, isliye emotion yahan banaya jaata hai:
+#   - har sentence ki speed / pitch / volume emotion ke hisaab se (gussa = tez + zor se, sad = dheema + neecha ...)
+#   - text ki chhoti tricks (gusse me "!" , sad me "..." pause)
+#   - CAPS ya "!!" wala sentence = chillahat
+#   - "haha / lol / 😂" = usi awaaz se bani hasi, "hehe / 😅" = halki hasi, "sigh / uff / 😔" = aah ki saans, "omg / 😱" = saans kheenchna
+#   - awaaz par effect: gussa = bhaari + kadak, sad / cry = kaanpti awaaz, scary = gunj, whisper = phusphusahat
+# Script me khud bhi bata sakte ho: {v:angry} {v:funny} {v:sad} {v:cry} {v:scary} {v:shout} {v:whisper} {v:excited}
+#   {v:surprise} {v:nervous} {v:sarcastic} {v:calm} {v:normal}   (ye tag screen par nahi dikhta)
+VOICE_TAG_RE = re.compile(r"\s*\{\s*(?:v|voice)\s*:\s*([a-z_]+)\s*\}", re.I)
+LAUGH_RE = re.compile(r"(?i)(?<![a-z])(?:a?ha(?:\s?ha)+h?|lo+l+|lmf?ao+|rofl|bwa+h?a+(?:ha)*)(?![a-z])|[\U0001F602\U0001F923\U0001F606\U0001F639]")
+CHUCKLE_RE = re.compile(r"(?i)(?<![a-z])(?:he(?:\s?he)+h?|heh)(?![a-z])|[\U0001F605\U0001F60F\U0001F61C\U0001F61D]")
+SIGH_RE = re.compile(r"(?i)\*?(?<![a-z])(?:sigh+s?|uff+|ugh+)(?![a-z])\*?|\U0001F62E‍\U0001F4A8|[\U0001F614\U0001F61E\U0001F629\U0001F97A\U0001F613]")
+GASP_RE = re.compile(r"(?i)(?<![a-z])(?:omg|oh my god|oh my gosh|no way|wait what|whoa+)(?![a-z])|[\U0001F631\U0001F628\U0001F632\U0001F92F\U0001F633]|\U0001F62E(?!‍)")
+CRY_RE = re.compile(r"[\U0001F62D\U0001F622]")
+def has_voice_cue(t): return any(r.search(t) for r in (LAUGH_RE, CHUCKLE_RE, SIGH_RE))
+SENT_RE = re.compile(r"[^.!?…]+(?:[.!?…]+|$)")
+EMO_ALIAS = {"funny": "funny", "laugh": "funny", "haha": "funny", "angry": "angry", "gussa": "angry", "shout": "shout", "chilla": "shout",
+             "sad": "sad", "cry": "cry", "rona": "cry", "scary": "scary", "dar": "scary", "horror": "scary", "mystery": "mystery",
+             "hype": "excited", "excited": "excited", "khush": "excited", "surprise": "surprise", "shock": "surprise",
+             "whisper": "whisper", "nervous": "nervous", "sarcastic": "sarcastic", "calm": "calm", "normal": "none", "none": "none", "off": "none"}
+MOOD_EMO = {"funny": "funny", "angry": "angry", "sad": "sad", "scary": "scary", "mystery": "mystery", "hype": "excited", "surprise": "surprise", "calm": "calm"}
+#            rate %, pitch (semitone), volume %, awaaz par effect (ffmpeg)
+EMO = {
+    "none":      (0, 0.0, 0, ""),
+    "calm":      (-4, -0.3, -5, ""),
+    "funny":     (8, 1.6, 6, "equalizer=f=3200:t=q:w=1.2:g=2"),
+    "excited":   (15, 2.4, 18, "equalizer=f=3000:t=q:w=1:g=3,acompressor=threshold=0.15:ratio=3:attack=5:release=100:makeup=2"),
+    "surprise":  (6, 3.0, 10, "equalizer=f=3000:t=q:w=1:g=2"),
+    "angry":     (10, -0.6, 28, "highpass=f=90,equalizer=f=2800:t=q:w=1.2:g=5,acompressor=threshold=0.12:ratio=5:attack=4:release=80:makeup=2.5,asoftclip=type=tanh"),
+    "shout":     (6, 2.2, 45, "highpass=f=110,equalizer=f=2600:t=q:w=1.1:g=7,acompressor=threshold=0.1:ratio=6:attack=3:release=70:makeup=3,asoftclip=type=tanh"),
+    "sad":       (-18, -1.5, -12, "lowpass=f=3600,vibrato=f=5.5:d=0.15"),
+    "cry":       (-14, 0.8, -10, "lowpass=f=3400,vibrato=f=6.5:d=0.35,tremolo=f=5:d=0.25"),
+    "scary":     (-16, -2.0, -8, "lowpass=f=3200,aecho=0.8:0.6:70|160:0.3|0.18"),
+    "mystery":   (-10, -1.0, -5, "aecho=0.8:0.55:90:0.22"),
+    "whisper":   (-6, -0.5, -30, "WHISPER"),
+    "nervous":   (14, 1.2, -5, "vibrato=f=7:d=0.1"),
+    "sarcastic": (-12, -0.8, 0, ""),
+}
+SLOW_EMO, FAST_EMO = ("sad", "cry", "scary", "mystery", "sarcastic"), ("excited", "angry", "shout", "funny")
+MALE_VOICES = ("Guy", "Davis", "Jason", "Tony", "Brandon", "Christopher", "Eric", "Roger", "Steffan", "Andrew", "Brian", "Jacob", "Ryan",
+               "Thomas", "William", "Liam", "Prabhat", "Connor", "Luke", "Madhur", "Ken", "Mitchell", "Wayne", "Sam", "Elliot", "Duncan")
+
+def pick_emotion(raw, vtag, mood):
+    if vtag: return EMO_ALIAS.get(vtag.lower(), "none")
+    e = MOOD_EMO.get(mood, "none")
+    if CRY_RE.search(raw) and e in ("none", "sad", "calm"): return "cry"
+    if e == "none":
+        if LAUGH_RE.search(raw) or CHUCKLE_RE.search(raw): return "funny"
+        if SIGH_RE.search(raw): return "sad"
+        if GASP_RE.search(raw): return "surprise"
+    return e
+
+SLANG = {"omg": "oh my god", "omfg": "oh my god", "idk": "I don't know", "tbh": "to be honest", "ngl": "not gonna lie", "btw": "by the way",
+         "imo": "in my opinion", "imho": "in my honest opinion", "rn": "right now", "smh": "shaking my head", "brb": "be right back",
+         "pls": "please", "plz": "please", "thx": "thanks", "ty": "thank you", "np": "no problem", "fr": "for real", "wtf": "what the heck",
+         "wth": "what the heck", "bruh": "bruh", "nvm": "never mind", "ikr": "I know right", "irl": "in real life", "afk": "away from keyboard",
+         "gg": "good game", "dm": "D M", "asap": "as soon as possible", "jk": "just kidding", "ofc": "of course", "u": "you", "ur": "your", "r": "are"}
+SLANG_RE = re.compile(r"(?i)(?<![\w'])(" + "|".join(sorted(map(re.escape, SLANG), key=len, reverse=True)) + r")(?![\w'])")
+
+def _tweak(t, e):
+    """text ki chhoti tricks taaki neural awaaz khud thoda emotion me bole"""
+    t = SLANG_RE.sub(lambda m: SLANG[m.group(1).lower()], t)
+    t = re.sub(r"\b([A-Z][A-Z']{3,})\b", lambda m: m.group(1).lower(), t)       # CAPS words spell na hon
+    if e in ("excited", "angry", "shout"):
+        t = re.sub(r"\.+$", "!", t) if re.search(r"[.!?]$", t) else t + "!"
+    elif e in ("sad", "cry"):
+        t = re.sub(r",\s*", "... ", t.replace("!", "."))
+        if not re.search(r"[.!?]$", t): t += "..."
+    elif e in ("scary", "mystery"):
+        t = re.sub(r",\s*", "... ", t); t = re.sub(r"(?<!\.)\.$", "...", t)
+    return t[:1].upper() + t[1:] if t else t
+
+def say_chunks(text, emo):
+    out = []
+    for sent in SENT_RE.findall(text):
+        t = tts_clean(sent)
+        if not re.search(r"\w", t): continue
+        letters = [c for c in t if c.isalpha()]
+        caps = len(letters) >= 4 and sum(c.isupper() for c in letters) / len(letters) > 0.7
+        loud = caps or bool(re.search(r"!!|\?!|!\?", sent))
+        e = emo
+        if loud and e in ("none", "angry", "calm", "sarcastic"): e, loud = "shout", False
+        if caps: t = t.lower()
+        if GASP_RE.search(sent): out.append(("gasp", "", e, False))
+        out.append(("say", _tweak(t, e), e, loud))
+    return out
+
+def voice_plan(raw, emo):
+    """message -> [(kind, text, emotion, loud)]  kind: say / laugh / chuckle / sigh / gasp"""
+    marks, last = [], -1
+    for s, e_, kind in sorted([(m.start(), m.end(), kd) for rx, kd in ((SIGH_RE, "sigh"), (LAUGH_RE, "laugh"), (CHUCKLE_RE, "chuckle"))
+                               for m in rx.finditer(raw)]):
+        if s >= last: marks.append((s, e_, kind)); last = e_
+    out, pos = [], 0
+    for s, e_, kind in marks:
+        out += say_chunks(raw[pos:s], emo); out.append((kind, "", emo, False)); pos = e_
+    out += say_chunks(raw[pos:], emo)
+    if emo == "none" and any(x[0] == "say" and x[2] == "shout" for x in out):
+        out = [("say", _tweak(x[1], "angry"), "angry", x[3]) if x[0] == "say" and x[2] == "none" else x for x in out]
+    merged = []                       # same tarah ke lagaatar sentence ek saath bolo (awaaz natural rehti hai)
+    for seg in out:
+        if merged and seg[0] in ("laugh", "chuckle", "sigh", "gasp") and merged[-1][0] == seg[0]: continue
+        if merged and seg[0] == "say" and merged[-1][0] == "say" and merged[-1][2:] == seg[2:]:
+            merged[-1] = ("say", merged[-1][1] + " " + seg[1], seg[2], seg[3]); continue
+        merged.append(seg)
+    seen = set()
+    for i, seg in enumerate(merged):           # har cue (hasi / halki hasi / aah / gasp) ek message me ek hi baar
+        if seg[0] != "say":
+            if seg[0] in seen or (seg[0] == "chuckle" and "laugh" in seen) or (seg[0] == "laugh" and "chuckle" in seen): merged[i] = None
+            seen.add(seg[0])
+    merged = [x for x in merged if x]
+    if emo == "nervous":              # pehle shabd par hakla: "W-what"
+        for i, seg in enumerate(merged):
+            if seg[0] == "say":
+                merged[i] = ("say", re.sub(r"^([A-Za-z])([a-z]+)", lambda m: f"{m.group(1)}-{m.group(1).lower()}{m.group(2)}", seg[1], 1), *seg[2:]); break
+    return merged
+
+def _prosody(sp, e, loud, strength, rng):
+    dr, dst, dv, _ = EMO.get(e, EMO["none"])
+    if loud: dr, dst, dv = dr + 4, dst + 0.8, dv + 18
+    st = dst * strength + rng.uniform(-0.25, 0.25)
+    f0 = 120 if any(nm in sp["voice"] for nm in MALE_VOICES) else 210
+    rate = int(sp["rate"][:-1]) + round(dr * strength + rng.uniform(-2.5, 2.5))
+    hz = int(sp["pitch"][:-2]) + round(f0 * (2 ** (st / 12) - 1))
+    vol = round(dv * strength)
+    rate, hz, vol = max(-60, min(100, rate)), max(-80, min(80, hz)), max(-80, min(100, vol))
+    return f"{rate:+d}%", f"{vol:+d}%", f"{hz:+d}Hz"
+
+def _decode(path):
+    raw = subprocess.run(["ffmpeg", "-loglevel", "error", "-i", str(path), "-f", "f32le", "-ac", "1", "-ar", str(SR), "-"], capture_output=True).stdout
+    return np.frombuffer(raw, dtype="<f4").astype(float)
+
+def _trim(x, keep=0.02):
+    if len(x) == 0: return x
+    thr = max(0.012, np.abs(x).max() * 0.04)
+    idx = np.where(np.abs(x) > thr)[0]
+    if not len(idx): return x[:0]
+    a, b = max(0, idx[0] - int(keep * SR)), min(len(x), idx[-1] + int(keep * 2 * SR))
+    y = x[a:b].copy(); f = min(len(y) // 4, int(0.008 * SR))
+    if f > 1: y[:f] *= np.linspace(0, 1, f); y[-f:] *= np.linspace(1, 0, f)
+    return y
+
+_fx_warned = set()
+def _fx(x, chain):
+    if not chain or len(x) < 64: return x
+    pad = np.concatenate([x, np.zeros(int(0.35 * SR))]) if "aecho" in chain else x
+    p = subprocess.run(["ffmpeg", "-loglevel", "error", "-f", "f32le", "-ar", str(SR), "-ac", "1", "-i", "-", "-af", chain,
+                        "-f", "f32le", "-ar", str(SR), "-ac", "1", "-"], input=pad.astype("<f4").tobytes(), capture_output=True)
+    if p.returncode or len(p.stdout) < 64:
+        if chain not in _fx_warned:
+            _fx_warned.add(chain); print(f"(voice effect nahi chala, bina effect: {chain[:40]} {p.stderr[-120:]!r})", flush=True)
+        return x
+    y = np.frombuffer(p.stdout, dtype="<f4").astype(float)
+    return _trim(y) if "aecho" in chain else y[:len(x)]
+
+def _bandnoise(n, rng, lo, hi, centre=None, width=None):
+    F = np.fft.rfft(rng.standard_normal(n)); f = np.fft.rfftfreq(n, 1 / SR)
+    F *= np.exp(-((f - centre) / width) ** 2) if centre else ((f >= lo) & (f <= hi))
+    y = np.fft.irfft(F, n); return y / (np.abs(y).max() + 1e-9)
+
+def _whisper(x, rng):
+    n = len(x)
+    if n < 256: return x
+    w = int(0.012 * SR); env = np.convolve(np.abs(x), np.ones(w) / w, mode="same")
+    X = np.fft.rfft(x); f = np.fft.rfftfreq(n, 1 / SR); X[f < 450] = 0; hp = np.fft.irfft(X, n)
+    y = 0.3 * hp + 2.4 * _bandnoise(n, rng, 1200, 7000) * env
+    return y * (np.sqrt((x ** 2).mean()) * 0.8 / (np.sqrt((y ** 2).mean()) + 1e-9))
+
+def _sigh(rng, ref):
+    n = int(rng.uniform(0.62, 0.8) * SR); t = np.arange(n) / SR
+    y = (_bandnoise(n, rng, 0, 0, 900, 600) + 0.3 * _bandnoise(n, rng, 0, 0, 2400, 900))
+    env = np.minimum(1, t / 0.12) ** 1.5 * np.exp(-2.6 * np.maximum(0, t - 0.12))
+    y = y * env; return y * (ref * 0.55 / (np.sqrt((y ** 2).mean()) + 1e-9))
+
+def _gasp(rng, ref):
+    n = int(rng.uniform(0.26, 0.34) * SR); t = np.arange(n) / SR
+    y = _bandnoise(n, rng, 0, 0, 2200, 1100) * (t / t[-1]) ** 1.4
+    f = int(0.008 * SR); y[-f:] *= np.linspace(1, 0, f)
+    return y * (ref * 0.6 / (np.sqrt((y ** 2).mean()) + 1e-9))
+
+def _speed(x, k):
+    if len(x) < 4 or abs(k - 1) < 1e-3: return x
+    return np.interp(np.arange(0, len(x) - 1, k), np.arange(len(x)), x)
+
+def _syllables(x):
+    """'Ha ha ha' ko alag alag 'ha' me kaato"""
+    if len(x) < 64: return [x]
+    w = int(0.02 * SR); env = np.sqrt(np.convolve(x ** 2, np.ones(w) / w, mode="same"))
+    on = env > env.max() * 0.18
+    segs, s = [], None
+    for i, v in enumerate(on):
+        if v and s is None: s = i
+        if not v and s is not None:
+            if i - s > int(0.06 * SR): segs.append(x[max(0, s - w // 2):i + w // 2])
+            s = None
+    if s is not None and len(x) - s > int(0.06 * SR): segs.append(x[s:])
+    return segs or [x]
+
+def _laugh(syl, rng, big=True):
+    if not syl: return np.zeros(1)
+    pat = ([(0, 1.0, 1.0), (1, 0.9, 1.06), (2, 0.8, 1.1), (1, 0.66, 1.12), (2, 0.52, 1.15)] if big else [(0, 0.72, 1.04), (1, 0.56, 1.08)])
+    parts = []
+    for i, g, k in pat:
+        y = _speed(syl[i % len(syl)][: int(0.26 * SR)], k * rng.uniform(0.97, 1.03)) * g
+        f = min(len(y) // 3, int(0.03 * SR))
+        if f > 1: y[-f:] *= np.linspace(1, 0, f)
+        parts += [y, np.zeros(int(rng.uniform(0.03, 0.055) * SR))]
+    return np.concatenate(parts)
+
+def _gap(prev_text, e):
+    g = 0.36 if prev_text.endswith(("...", "…")) else 0.25 if prev_text.endswith("?") else 0.2 if prev_text.endswith("!") else 0.22 if prev_text.endswith(".") else 0.16
+    return g * (1.35 if e in SLOW_EMO else 0.75 if e in FAST_EMO else 1.0)
+
 def gen_voice(S, out_dir):
-    """har message ki awaaz (edge-tts, free) banao -> {k: {file, dur}}"""
+    """har message ki awaaz (edge-tts, free) + emotion -> {k: {file, dur}}"""
     v = S["voice"]
     if not v["on"] or not S["vtexts"]: return {}
     try:
         import asyncio, edge_tts
     except ImportError:
         print("(voice: edge-tts install nahi hai - bina voice ke render hoga)"); return {}
-    out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True)
-    async def one(sem, k, role, text):
-        sp = v.get(role) or v["ai"]; path = out_dir / f"{k}.mp3"
+    import hashlib
+    out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True); tmp = out_dir / ".tts"; tmp.mkdir(exist_ok=True)
+    strength = max(0.0, min(2.0, float(v.get("emo", 1.0))))
+    # ---- har message ka plan (emotion + tukde)
+    plans, jobs = {}, {}
+    def job(text, sp, rate, vol, pitch):
+        key = hashlib.md5(f"{sp['voice']}|{rate}|{vol}|{pitch}|{text}".encode()).hexdigest()[:16]
+        jobs[key] = (text, sp["voice"], rate, vol, pitch); return key
+    for k, (role, raw) in S["vtexts"].items():
+        sp = v.get(role) or v["ai"]
+        emo = pick_emotion(raw, S.get("vemo", {}).get(k), S["moods"].get(k)) if strength > 0 else "none"
+        segs = voice_plan(raw, emo) if strength > 0 else [("say", tts_clean(raw), "none", False)]
+        rng = np.random.default_rng(1000 + k); steps = []
+        for kind, text, e, loud in segs:
+            if kind == "say":
+                rate, vol, pitch = _prosody(sp, e, loud, strength, rng) if strength > 0 else (sp["rate"], "+0%", sp["pitch"])
+                steps.append(("say", job(text, sp, rate, vol, pitch), text, e, loud))
+            elif kind in ("laugh", "chuckle"):
+                rate, vol, pitch = _prosody(sp, "funny", False, max(strength, 0.6), np.random.default_rng(7))
+                steps.append((kind, job("Ha ha ha!" if kind == "laugh" else "Heh heh.", sp, rate, vol, pitch), "", e, False))
+            else:
+                steps.append((kind, None, "", e, False))
+        plain = job(tts_clean(raw), sp, sp["rate"], "+0%", sp["pitch"]) if re.search(r"\w", tts_clean(raw)) else None
+        plans[k] = (role, emo, steps, plain)
+    # ---- saari TTS ek saath (4-4 karke), dobara koshish ke saath
+    got = {}
+    async def one(sem, key):
+        text, voice, rate, vol, pitch = jobs[key]; path = tmp / f"{key}.mp3"
         for attempt in range(4):
             try:
                 async with sem:
-                    await edge_tts.Communicate(text, sp["voice"], rate=sp["rate"], pitch=sp["pitch"]).save(str(path))
-                if path.exists() and path.stat().st_size > 500: return k, path
+                    await edge_tts.Communicate(text, voice, rate=rate, volume=vol, pitch=pitch).save(str(path))
+                if path.exists() and path.stat().st_size > 300: return key, path
             except Exception as e:
-                print(f"(voice msg {k}: koshish {attempt + 1} fail: {str(e)[:90]})", flush=True)
+                print(f"(voice '{text[:30]}': koshish {attempt + 1} fail: {str(e)[:90]})", flush=True)
             await asyncio.sleep(1.5 * (attempt + 1))
-        return k, None
-    async def run():
+        return key, None
+    async def run(keys):
         sem = asyncio.Semaphore(4)
-        return await asyncio.gather(*[one(sem, k, r, t) for k, (r, t) in S["vtexts"].items()])
+        return await asyncio.gather(*[one(sem, kk) for kk in keys])
+    needed = {s[1] for _, _, st, _ in plans.values() for s in st if s[1]}
+    for key, path in asyncio.run(run(sorted(needed))):
+        if path: got[key] = _trim(_decode(path))
+    # ---- har message jodo
     out = {}
-    for k, path in asyncio.run(run()):
-        if path:
-            d = media_duration(path)
-            if d > 0.2: out[k] = dict(file=path.name, dur=round(d, 3))
-    print(f"[voice] {len(out)}/{len(S['vtexts'])} message ki awaaz ban gayi", flush=True)
+    for k, (role, emo, steps, plain) in plans.items():
+        rng = np.random.default_rng(5000 + k)
+        if any(s[1] and s[1] not in got and s[0] == "say" for s in steps):      # koi tukda nahi bana -> seedhi awaaz
+            if plain and plain not in got:
+                r = asyncio.run(run([plain]))[0]
+                if r[1]: got[plain] = _trim(_decode(r[1]))
+            steps = [("say", plain, "", "none", False)] if plain in got else []
+        speech = [got[s[1]] for s in steps if s[0] == "say" and s[1] in got and len(got[s[1]])]
+        ref = float(np.mean([np.sqrt((x ** 2).mean()) for x in speech])) if speech else 0.08
+        parts, prev, used = [np.zeros(int(0.03 * SR))], None, []
+        for kind, key, text, e, loud in steps:
+            if kind == "say":
+                x = got.get(key)
+                if x is None or not len(x): continue
+                fx = EMO.get(e, EMO["none"])[3]
+                if strength >= 0.5 or fx == "WHISPER":
+                    x = _whisper(x, rng) if fx == "WHISPER" else _fx(x, fx)
+                    if loud and fx and "acompressor" not in fx: x = _fx(x, "acompressor=threshold=0.15:ratio=3:attack=5:release=90:makeup=2")
+                if prev is not None: parts.append(np.zeros(int(_gap(prev, e) * SR)))
+                parts.append(x); prev = text or "."; used.append(e + ("!" if loud else ""))
+            elif kind in ("laugh", "chuckle") and key in got:
+                lg = _laugh(_syllables(got[key]), rng, kind == "laugh")
+                parts += [np.zeros(int(0.06 * SR)), lg, np.zeros(int(0.06 * SR))]; prev = None; used.append(kind)
+            elif kind == "sigh":
+                parts += [_sigh(rng, ref), np.zeros(int(0.12 * SR))]; prev = None; used.append("sigh")
+            elif kind == "gasp":
+                parts += [np.zeros(int(0.04 * SR)), _gasp(rng, ref), np.zeros(int(0.07 * SR))]; prev = None; used.append("gasp")
+        y = np.concatenate(parts) if len(parts) > 1 else np.zeros(0)
+        if len(y) < int(0.2 * SR): continue
+        y = np.concatenate([y, np.zeros(int(0.05 * SR))])
+        pk = np.abs(y).max()
+        if pk > 0.97: y = np.tanh(y / pk * 1.4) / np.tanh(1.4) * 0.97
+        path = out_dir / f"{k}.wav"
+        with wave.open(str(path), "wb") as w:
+            w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR); w.writeframes((np.clip(y, -1, 1) * 32767).astype("<i2").tobytes())
+        out[k] = dict(file=path.name, dur=round(len(y) / SR, 3))
+        print(f"[voice] msg {k} ({role}): {emo} -> {' + '.join(used) or '-'} ({len(y) / SR:.1f}s)", flush=True)
+    import shutil; shutil.rmtree(tmp, ignore_errors=True)
+    print(f"[voice] {len(out)}/{len(S['vtexts'])} message ki awaaz ban gayi (emotion {'off' if strength == 0 else strength})", flush=True)
     return out
 
 QUALITY = {"4k": 2160, "2160p": 2160, "2k": 1440, "1440p": 1440, "1080p": 1080, "720p": 720}
@@ -1030,7 +1309,7 @@ def load_ui(ratio="16:9"):
 
 def settings(script, a):
     global W, H, VW, VH
-    items, opts, moods, memes, vraw = parse_script(script)
+    items, opts, moods, memes, vraw, vemo = parse_script(script)
     if not any(x.get("k") is not None for x in items): sys.exit(f"{script}: script me koi message nahi mila (User: / ChatGPT: / Gemini: / Grok: / Claude:)")
     off = lambda k, d="on": str(opts.get(k, d)).lower() in ("off", "no", "0", "false")
     on = lambda k, d="off": str(opts.get(k, d)).lower() in TRUE
@@ -1076,10 +1355,10 @@ def settings(script, a):
     def other(who):
         v = str(opts.get(f"voice_{who}", "same"))
         return dict(ai, voice=v) if re.fullmatch(r"[A-Za-z]{2}-[A-Za-z]{2,4}-[A-Za-z0-9]+Neural", v) else ai
-    voice = dict(on=on("voice"), vol=fl("voice_vol", 1.0), user=vsp("user", "en-US-GuyNeural"), ai=ai, chatgpt=ai,
+    emo_s = 0.0 if off("voice_emotion") else (1.0 if str(opts.get("voice_emotion", "on")).lower() in TRUE else fl("voice_emotion", 1.0))
+    voice = dict(on=on("voice"), vol=fl("voice_vol", 1.0), emo=emo_s, user=vsp("user", "en-US-GuyNeural"), ai=ai, chatgpt=ai,
                  gemini=other("gemini"), grok=other("grok"), claude=other("claude"))
-    vtexts = {k: (r, tts_clean(t)) for k, (r, t) in vraw.items()}
-    vtexts = {k: (r, t) for k, (r, t) in vtexts.items() if re.search(r"\w", t)}
+    vtexts = {k: (r, t) for k, (r, t) in vraw.items() if re.search(r"\w", tts_clean(t)) or has_voice_cue(t)}
     # ---- tool settings (dashboard sync) + script header
     ls, ui = load_ui(ratio)
     for key, lk in (("gpt_delay", "dA"), ("opp_delay", "dG"), ("user_delay", "dU"), ("send_delay", "dSend"), ("chat_size", "chat_font_size"),
@@ -1091,7 +1370,7 @@ def settings(script, a):
                   human=on("human"), laptop=on("laptop"), end=end_on, endText=opts.get("end_text") or "Thanks for watching!",
                   brand=opts.get("end_sub") or brand, start=int(fl("start_delay", 2.0) * 1000))
     S = dict(
-        voice=voice, vtexts=vtexts, vroles={k: r for k, (r, _) in vtexts.items()},
+        voice=voice, vtexts=vtexts, vroles={k: r for k, (r, _) in vtexts.items()}, vemo=vemo,
         moods=moods, memes=memes, name=Path(script).stem, use_intro=use_intro, brand=brand,
         intro_video=str(intro_video) if intro_video else None, n_intro=n_intro,
         end_video=str(end_video) if end_video else None, n_end=n_end,

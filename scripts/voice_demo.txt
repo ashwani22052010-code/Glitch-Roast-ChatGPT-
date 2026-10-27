@@ -1,0 +1,30 @@
+# quality = 1080p
+# fps = 30
+# ratio = 16:9
+# voice = on
+# voice_emotion = 1
+# voice_user = en-US-GuyNeural
+# voice_ai = en-US-JennyNeural
+# voice_gemini = en-US-AriaNeural
+# voice_grok = en-US-DavisNeural
+# voice_claude = en-GB-SoniaNeural
+# music = off
+# intro = off
+
+User: Bro tell me a joke 😂
+ChatGPT: Why did the scarecrow win an award? Because he was outstanding in his field! Hahaha 🤣
+User: That is the WORST joke ever!! I am SO done with you!
+ChatGPT: Okay okay, calm down. It was just a joke. {v:calm}
+User: My dog ran away today... 😢
+Gemini: Oh no, I'm really sorry. *sigh* That must hurt so much.
+User: omg wait... there's someone outside my window 😱
+Grok: Don't move. Turn off the lights. And don't make a sound... {scary}
+Claude: {v:whisper} Stay quiet. Breathe slowly. Everything will be okay.
+User: hehe just kidding, it was my neighbor 😅
+
+--- battle ---
+ChatGPT: I'm the BEST AI ever!!! 🔥 {hype}
+Gemini: lol 😂
+Grok: You two are HILARIOUS. Sit down!! {v:angry}
+Claude: Gentlemen... let's keep it civil. {v:calm}
+!end: Thanks for watching! | Glitch Roast
