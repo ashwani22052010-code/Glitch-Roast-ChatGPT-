@@ -1,0 +1,16 @@
+# quality = 1080p
+# fps = 30
+# ratio = 16:9
+# voice = off
+# intro = on
+# brand = Glitch Roast
+# end = on
+# bgm = bgm
+# bgm_vol = 0.12
+User: Hey ChatGPT, I need help with my homework 😅
+ChatGPT: Sure! What subject is it?
+User: Bro my code broke again 😂 {funny}
+ChatGPT: LMAO you forgot a semicolon 💀
+User: NOOO!! 😱
+ChatGPT: Relax, I fixed it. You're welcome 😎
+!end: Thanks for watching! | Glitch Roast
