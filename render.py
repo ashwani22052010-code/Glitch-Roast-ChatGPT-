@@ -1620,7 +1620,8 @@ SFX_MODE = ["real" if REAL_SFX else "code"]
 ANCHOR_PEAK, ANCHOR_END = {"swell_hit", "vs_hit", "zoom_hit", "punch"}, {"riser"}
 
 def sfx_have(name):
-    """is mode me ye awaaz baj sakti hai?"""
+    """sirf wahi awaaz jo tumne sounds/ me upload ki"""
+    return name in CUSTOM_SFX
     return name in CUSTOM_SFX or SFX_MODE[0] != "real" or REAL_ALIAS.get(name, name) in REAL_SFX
 
 def _load_real(f):
@@ -1632,6 +1633,8 @@ def sfx_full(name, var=0):
     """naam -> (awaaz, anchor sec). anchor = awaaz ka wo pal jo message ke saath milna chahiye (jaise riser ka end)"""
     key = (name, var, SFX_MODE[0])
     if key in _sfx_cache: return _sfx_cache[key]
+    if name not in CUSTOM_SFX:          # sirf tumhari file (timing ke liye)
+        _sfx_cache[key] = (np.zeros(10), 0.0); return _sfx_cache[key]
     rn = REAL_ALIAS.get(name, name)
     if SFX_MODE[0] != "code" and rn in REAL_SFX:
         fs = REAL_SFX[rn]; x = _load_real(fs[var % len(fs)])
@@ -1858,10 +1861,11 @@ def load_custom(name):
     _custom_cache[name] = x
     return x
 
+SILENT = np.zeros(10)
 def get_sfx(name, var=0):
-    if name.startswith("sys:"): return sfx(name[4:], var)          # system wali (custom file hone par bhi)
+    if name.startswith("sys:"): return SILENT                        # system wali awaaz ab hai hi nahi
     x = ui_custom(name) if name in UI_NAMES else load_custom(name)
-    return x if x is not None else sfx(name, var)
+    return x if x is not None else SILENT
 
 def intro_sfx():
     rng = np.random.default_rng(11); out = np.zeros(int((INTRO_S + 0.8) * SR))
@@ -1971,8 +1975,8 @@ def make_audio(clicks_s, events, music_tl, seconds, intro_s, path, vol_click, vo
             if fd > 0: seg[:fd] *= np.linspace(0, 1, fd); seg[-fd:] *= np.linspace(1, 0, fd)
             put(out, seg, a, vol_click)
     else:
-        variants = (custom_key_variants() if keys == "toolkeys" else None) or key_variants(norm_style("iphone" if keys in ("tool", "toolkeys") else keys))
-        for c in clicks_s:
+        variants = custom_key_variants() if keys == "toolkeys" else None     # system typing nahi: sirf tumhari
+        for c in (clicks_s if variants else []):
             put(out, variants[int(rng.integers(0, len(variants)))], c, vol_click)
     if vol_sfx > 0:
         cache, fxb = {}, np.zeros(len(out))
@@ -1983,13 +1987,12 @@ def make_audio(clicks_s, events, music_tl, seconds, intro_s, path, vol_click, vo
         if vduck:                    # awaaz ke shuru ka jhatka poora, baaki voice ke neeche aadha
             fxb *= 1 - 0.5 * (1 - duck_env(len(out), [(a + 0.15, b) for a, b in vduck if b > a + 0.15], 0.1))
         out += fxb
-        if use_intro == "text":
-            put(out, intro_sfx(), 0.0, vol_sfx)
+        if use_intro == "text" and "intro" in CUSTOM_SFX:
+            put(out, load_custom("intro"), 0.0, vol_sfx)
     bed = None
     if bgm:
         bed = bgm_track(bgm, seconds, intro_s)
-    elif vol_music > 0:
-        bed = music_track(music_tl, seconds, intro_s, vol_music)
+    # code se bana mood music hata diya: music sirf music/ me upload kiya hua
     if bed is not None:
         out += bed * duck_env(len(out), duck) if duck else bed
     for st, arr, gain in (extra or []):
@@ -2168,7 +2171,7 @@ def find_bgm(opts):
         if p.is_file(): return dict(path=str(p), start=start, vol=vol)
     f = find_media(MUSIC_DIR, Path(name).stem, SFX_EXT)
     if f: return dict(path=str(f), start=start, vol=vol)
-    print(f"(bgm '{name}' nahi mili - music/ folder me upload karo. Abhi built-in music use ho raha hai)")
+    print(f"(bgm '{name}' nahi mili - music/ folder me upload karo. Abhi koi music nahi bajega)")
     return None
 
 EMOJI_RE = re.compile("[\U0001F000-\U0001FAFF\u2190-\u21FF\u2300-\u23FF\u2600-\u27BF\u2B00-\u2BFF\uFE0F\u200B-\u200F\u2060]")
@@ -3011,7 +3014,7 @@ def finish(cfg, S, plan, video_path, out_dir):
         if mood in MUSIC_OF: music_tl.append((sh((e["t"] - t0) / 1000), MUSIC_OF[mood]))
     fx_used = [f"{tm:.1f}s {nm}" for tm, nm, *r in events if r and r[-1]]
     if fx_used: print(f"[{name}] sound effects ({len(fx_used)}, mode {SFX_MODE[0]}): " + ", ".join(fx_used), flush=True)
-    if S.get("_nofx"): print(f"[{name}] in tags ki asli awaaz abhi repo me nahi (sounds/real/<naam>/ me daalo): {sorted(set(S['_nofx']))}", flush=True)
+    if S.get("_nofx"): print(f"[{name}] in tags ki sound upload nahi hui, isliye nahi baji (sounds/<naam>.mp3 upload karo): {sorted(set(S['_nofx']))}", flush=True)
     clicks_s = [sh(c / 1000) for c in plan["clicks"]]
     seconds = (n_intro + k + n_end) / fps
     for gp in gaps:                 # meme ki apni awaaz + music dabana

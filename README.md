@@ -1,7 +1,7 @@
 # ⚔️ 4-AI Cinematic Render
 
 Tumhare **4-AI Cinematic Engine** (ChatGPT / Gemini / Grok / Claude + Battle mode) ki video GitHub Actions par banti hai:
-720p se 4K, 30/60 fps, 16:9 ya 9:16, intro, end screen, memes, apni sounds, background music aur voice.
+720p se 4K, 30/60 fps, 16:9 ya 9:16, intro, end screen, memes, tumhari apni sounds aur music, aur voice.
 Control Netlify wale **4-AI Cinematic Studio** dashboard se hota hai.
 
 ## Repo me kya hai
@@ -38,45 +38,20 @@ Claude: ...
 Roles: `User:` `ChatGPT:` (ya `GPT:` / `AI:`) `Gemini:` `Grok:` `Claude:`.
 Dashboard header ki saari `# ...` lines khud likh deta hai.
 
-## Sound effects (free, apne aap)
+## Sound effects + music: SIRF TUMHARI
 
-**Asli awaazein:** `sounds/real/` me ~270 asli recordings (79 naam, har naam ke kai versions) hain, sab **CC0 / public domain**
-(Kenney, OpenGameArt, BigSoundBank jaise free packs; list `sounds/real/CREDITS.md` me). YouTube monetization par koi copyright claim nahi.
-Har message ka feel dekh kar (emoji, shabd, mood, voice ka emotion)
-usse milti awaaz bajti hai: joke ke baad boing / ba-dum-tss / honk, roast par boom / airhorn, gusse me dhamaka / punch, sad me piano / violin,
-darr me horror cheekh / dhak-dhak / darwaza, 💰 par ka-ching, ❌ par wah-wah-waaah, 😬 par jhingur... Har group me kai awaazein hain,
-patte ki tarah shuffle: jab tak group ki saari na baj jaayein koi dobara nahi, aur har baar thodi alag (pitch / speed).
-Battle shuru hote hi dhamaka + boxing bell, har naye AI par whoosh, aur Gemini / Grok / Claude ke reply ki apni awaaz.
-Har message par kuch na kuch bajta hai: normal baat par halka plink / tap / chamak, sawaal par "hm?", aur zor wale message
-(CAPS, `!!`, gussa, shock) par aate hi ek jhatka + punchline ke baad wali awaaz.
+System me koi bhi built-in awaaz nahi hai (na code wali, na koi pack). Video me sirf wahi bajta hai jo tumne upload kiya:
+`sounds/` (sound effects, typing, send, reply) aur `music/` (background music). Kuch upload nahi kiya = wo awaaz band.
 
-Khud lagana ho to message me likho (screen par nahi dikhta):
-
-| Group (us group ki koi bhi) | Kab |
+| Kaise | Kya hota hai |
 |---|---|
-| `{funny}` `{angry}` `{sad}` `{scary}` `{mystery}` `{hype}` `{surprise}` | mood (awaaz + music bhi badalta hai) |
-| `{roast}` `{awkward}` `{fail}` `{win}` `{money}` `{love}` `{tech}` `{party}` `{sarcastic}` `{dead}` `{clown}` | sirf sound effect |
-| `{blast}` `{spooky}` `{time}` `{magic}` `{bells}` `{fight}` `{blade}` `{storm}` `{launch}` `{oof}` `{dun}` `{idea}` `{evil}` | sirf sound effect |
+| `sounds/vine_boom.mp3` upload, message me `{vine_boom}` | us message par wahi sound |
+| `sounds/funny_1.mp3`, `funny_2.mp3` ... | `funny` group: tag `{funny}` ya auto (joke / 😂 par) - har baar alag, repeat nahi |
+| aur group: `roast` `angry` `sad` `scary` `mystery` `hype` `surprise` `awkward` `fail` `win` `money` `love` `tech` `party` `sarcastic` `dead` `clown` `neutral` `question` ... | naam `group_1`, `group_2` rakho |
+| `music/bgm.mp3` + `# bgm = bgm` | background music loop me (`# bgm_vol = 0.14`) |
 
-Ek khaas awaaz: `{boom}` `{boom2}` `{airhorn}` `{rimshot}` `{boing}` `{doing}` `{honk}` `{bonk}` `{slide_up}` `{slide_down}` `{squeak}` `{pops}`
-`{xylo_up}` `{xylo_down}` `{zip}` `{sad_trombone}` `{deflate}` `{fall}` `{tada}` `{fanfare}` `{explosion}` `{burn}` `{slap}` `{ring}` `{glass}`
-`{bass_drop}` `{impact}` `{impact_deep}` `{impact_metal}` `{slam}` `{punch}` `{clang}` `{buzzer}` `{thunder}` `{alarm}` `{braam}` `{sword}`
-`{piano_sad}` `{piano_low}` `{violin}` `{musicbox}` `{sting}` `{screech}` `{sting_low}` `{heartbeat}` `{creak}` `{drone}` `{ghost}` `{swell_hit}`
-`{toll}` `{wind}` `{dun_dun}` `{tick}` `{tick_fast}` `{sparkle}` `{sneaky}` `{riser}` `{sonar}` `{vibes}` `{applause}` `{levelup}` `{coin}`
-`{coins}` `{cash}` `{fireworks}` `{power_up}` `{power_down}` `{laser}` `{drumroll}` `{orch_hit}` `{scratch}` `{zoom_hit}` `{ding}` `{ding2}`
-`{glitch}` `{crickets}` `{bloop}` `{beeps}` `{error}` `{harp}` `{chime}` `{heart_soft}` `{whoosh}` `{swoosh}` `{boxing_bell}` `{vs_hit}`
-`{plink}` `{tap}` `{shimmer}` `{blip}` `{blip_up}` `{ponder}` (halke) &nbsp;·&nbsp; group: `{neutral}` `{question}` `{accent}`
-`{siren}` `{dial}` `{phone_ring}` `{knock}` &nbsp;·&nbsp; group: `{police}` (🚨 🚓 FBI) `{phone}` (📞) `{door}` (🚪)
-
-`# sfx_real = only` (default) = sirf asli recordings bajti hain; jis tag ki asli awaaz abhi nahi hai wo chup rehta hai (log me naam aata hai).
-`# sfx_real = mix` = asli ho to asli, warna code wali. `# sfx_real = off` = sirf purani code wali.
-Asli abhi nahi: airhorn, honk, rimshot, crickets, applause, siren, dial, phone_ring, cash, sad_trombone, heartbeat, sting, sting_low,
-drumroll, xylo_up/down, harp, braam, bass_drop, alarm, deflate, ghost, swell_hit, dun_dun, piano_sad, sonar, wind, ring, heart_soft, vibes.
-Inhe Pixabay se download karke usi naam se `sounds/` me daalo (jaise `sounds/airhorn.mp3`), ya ek naam ke kai versions
-`sounds/real/airhorn/01.mp3`, `02.mp3` ... me.
-
-`{nosfx}` = us message par koi effect nahi. `# sfx = 0.6` = sab effects dheeme (`off` = band), `# sfx_auto = off` = sirf tag wale.
-Apni awaaz: `sounds/boom.mp3` daalo to built-in `boom` ki jagah wahi bajegi; `sounds/funny_2.mp3` jaisa naam = `funny` group me ek aur option.
+`{nosfx}` = us message par kuch nahi. `# sfx = 0.6` = effects dheeme (`off` = band), `# sfx_auto = off` = sirf tag wale.
+Jis tag ki file upload nahi hui, wo chup rehta hai aur render log me uska naam aa jaata hai.
 
 ## Meri sounds: typing / send / reply (gallery se)
 
@@ -90,13 +65,13 @@ Dashboard ke **⌨️ Chat Sounds** panel me har ek ke liye **System** ya **Meri
 | `sounds/recv_chatgpt.mp3` | ChatGPT ka reply aane par |
 
 ```
-# typing_sound = custom      (ya system -> # keys = iphone / mech / thock / bubble / typewriter / glass)
+# typing_sound = custom      (ya off = typing ki awaaz band)
 # typing_mode = loop         (tool jaisa, recording loop me)   ya   keys (recording se kaate click, har akshar par ek)
-# send_sound = custom        (ya system)
-# recv_sound = custom        (ya system)
+# send_sound = custom        (ya off)
+# recv_sound = custom        (ya off)
 # send_vol = 1.2             # recv_vol = 0.8     (100% = 1.0)
 ```
-Kuch na likho to: file repo me hai to wahi bajti hai. Tumhari sound ki zor apne aap baaki awaazon jitni kar di jaati hai.
+Kuch na likho to: file repo me hai to wahi bajti hai, nahi hai to koi awaaz nahi. Tumhari sound ki zor apne aap baaki awaazon jitni kar di jaati hai.
 
 ## Voice + emotion (free)
 
