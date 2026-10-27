@@ -38,11 +38,41 @@ Claude: ...
 Roles: `User:` `ChatGPT:` (ya `GPT:` / `AI:`) `Gemini:` `Grok:` `Claude:`.
 Dashboard header ki saari `# ...` lines khud likh deta hai.
 
+## Sound effects (free, apne aap)
+
+~85 awaazein code se hi banti hain (koi download / paisa nahi). Har message ka feel dekh kar (emoji, shabd, mood, voice ka emotion)
+usse milti awaaz bajti hai: joke ke baad boing / ba-dum-tss / honk, roast par boom / airhorn, gusse me dhamaka / punch, sad me piano / violin,
+darr me horror cheekh / dhak-dhak / darwaza, 💰 par ka-ching, ❌ par wah-wah-waaah, 😬 par jhingur... Har group me kai awaazein hain,
+patte ki tarah shuffle: jab tak group ki saari na baj jaayein koi dobara nahi, aur har baar thodi alag (pitch / speed).
+Battle shuru hote hi dhamaka + boxing bell, har naye AI par whoosh, aur Gemini / Grok / Claude ke reply ki apni awaaz.
+
+Khud lagana ho to message me likho (screen par nahi dikhta):
+
+| Group (us group ki koi bhi) | Kab |
+|---|---|
+| `{funny}` `{angry}` `{sad}` `{scary}` `{mystery}` `{hype}` `{surprise}` | mood (awaaz + music bhi badalta hai) |
+| `{roast}` `{awkward}` `{fail}` `{win}` `{money}` `{love}` `{tech}` `{party}` `{sarcastic}` `{dead}` `{clown}` | sirf sound effect |
+| `{blast}` `{spooky}` `{time}` `{magic}` `{bells}` `{fight}` `{blade}` `{storm}` `{launch}` `{oof}` `{dun}` `{idea}` `{evil}` | sirf sound effect |
+
+Ek khaas awaaz: `{boom}` `{boom2}` `{airhorn}` `{rimshot}` `{boing}` `{doing}` `{honk}` `{bonk}` `{slide_up}` `{slide_down}` `{squeak}` `{pops}`
+`{xylo_up}` `{xylo_down}` `{zip}` `{sad_trombone}` `{deflate}` `{fall}` `{tada}` `{fanfare}` `{explosion}` `{burn}` `{slap}` `{ring}` `{glass}`
+`{bass_drop}` `{impact}` `{impact_deep}` `{impact_metal}` `{slam}` `{punch}` `{clang}` `{buzzer}` `{thunder}` `{alarm}` `{braam}` `{sword}`
+`{piano_sad}` `{piano_low}` `{violin}` `{musicbox}` `{sting}` `{screech}` `{sting_low}` `{heartbeat}` `{creak}` `{drone}` `{ghost}` `{swell_hit}`
+`{toll}` `{wind}` `{dun_dun}` `{tick}` `{tick_fast}` `{sparkle}` `{sneaky}` `{riser}` `{sonar}` `{vibes}` `{applause}` `{levelup}` `{coin}`
+`{coins}` `{cash}` `{fireworks}` `{power_up}` `{power_down}` `{laser}` `{drumroll}` `{orch_hit}` `{scratch}` `{zoom_hit}` `{ding}` `{ding2}`
+`{glitch}` `{crickets}` `{bloop}` `{beeps}` `{error}` `{harp}` `{chime}` `{heart_soft}` `{whoosh}` `{swoosh}` `{boxing_bell}` `{vs_hit}`
+
+`{nosfx}` = us message par koi effect nahi. `# sfx = 0.6` = sab effects dheeme (`off` = band), `# sfx_auto = off` = sirf tag wale.
+Apni awaaz: `sounds/boom.mp3` daalo to built-in `boom` ki jagah wahi bajegi; `sounds/funny_2.mp3` jaisa naam = `funny` group me ek aur option.
+
 ## Voice + emotion (free)
 
 Script me `# voice = on` ho to har message bola jaata hai (Microsoft ki free edge-tts awaaz). Emotion apne aap aata hai:
-mood tag (`{funny}` `{angry}` `{sad}` `{scary}` `{hype}`) aur emoji se. `haha` / `lol` / 😂 = usi awaaz me hasi, `hehe` / 😅 = halki hasi,
-`*sigh*` / `uff` / 😔 = aah, `omg` / 😱 = saans kheenchna, 😭 = rote hue, CAPS ya `!!` = chillana.
+mood tag (`{funny}` `{angry}` `{sad}` `{scary}` `{hype}`) aur emoji se. `*sigh*` / `uff` / 😔 = aah, `omg` / 😱 = saans kheenchna,
+😭 = rote hue, CAPS ya `!!` = chillana.
+Hasi usi awaaz me, asli hasi jaisi (chhote "ha", har ek se pehle saans, pitch upar se girta, aakhir me saans andar):
+`haha` / `lol` = normal, `hahaha` / 😂 = badi, `lmao` / 🤣 = zor ki, `heh` / 😏 = chuckle, `hehe` / `xD` / 🤭 = giggle, 😅 = nervous,
+`mwahaha` = villain wali (gunj ke saath), 💀 = saans wali hasi, sarcasm me "ha. ha.".
 Khud batana ho to message me `{v:angry}` `{v:funny}` `{v:sad}` `{v:cry}` `{v:scary}` `{v:shout}` `{v:whisper}` `{v:excited}`
 `{v:surprise}` `{v:nervous}` `{v:sarcastic}` `{v:calm}` `{v:normal}` likho (screen par nahi dikhta).
 `# voice_emotion = 1` (normal), `1.4` (zyada), `0.6` (halka), `off`.

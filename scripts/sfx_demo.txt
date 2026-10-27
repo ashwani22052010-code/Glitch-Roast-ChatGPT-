@@ -1,0 +1,36 @@
+# quality = 1080p
+# fps = 30
+# ratio = 16:9
+# voice = on
+# voice_emotion = 1
+# voice_user = en-US-AndrewMultilingualNeural
+# voice_ai = en-US-AvaMultilingualNeural
+# voice_gemini = en-US-EmmaMultilingualNeural
+# voice_grok = en-US-ChristopherNeural
+# voice_claude = en-GB-SoniaNeural
+# music = off
+# intro = off
+
+User: Yo ChatGPT, roast my code 😂
+ChatGPT: Your code is so slow, even a snail asked for a faster lane. Hahaha 🤣
+User: Bruh 💀 that's emotional damage!
+ChatGPT: Don't worry, it only hurts your keyboard. hehe
+User: Okay, one more. Why is my code always broken? 🤔
+ChatGPT: Because you wrote it at 3 AM with zero sleep. lmao
+User: I HATE YOU!! 😡
+ChatGPT: Oh no... the user is angry. Whatever will I do? {v:sarcastic}
+User: Fine. I'll go cry now 😭
+ChatGPT: *sigh* Okay, I'm sorry. Here is a virtual cookie.
+User: Wait... did you hear that? 😱
+ChatGPT: Something is hiding in your code... a bug. Mwahahaha 😈 {scary}
+
+--- battle ---
+ChatGPT: I am the KING of AI!!! 🏆 {hype}
+Gemini: lol 😂 King? You can't even draw hands.
+Grok: Both of you are cooked. 🔥🔥 Sit down!!
+Claude: {v:whisper} Gentlemen... let's keep it civil. ✨
+ChatGPT: Wrong answer, Claude ❌ heh
+Gemini: 💰 Money talks, and I'm the richest model here. xD
+Grok: Plot twist... I wrote all of your code. 🕵️
+Claude: Awkward... 😬
+!end: Thanks for watching! | Glitch Roast
