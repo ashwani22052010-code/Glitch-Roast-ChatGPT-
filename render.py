@@ -1197,6 +1197,24 @@ def gen_voice(S, out_dir):
     import hashlib
     out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True); tmp = out_dir / ".tts"; tmp.mkdir(exist_ok=True)
     strength = max(0.0, min(2.0, float(v.get("emo", 1.0))))
+    # ---- jo voice free service me nahi hai (sirf paid Azure me hoti hai) uski jagah usi jaisi doosri
+    FALLBACK = {"Davis": "en-US-ChristopherNeural", "Tony": "en-US-EricNeural", "Jason": "en-US-BrianNeural", "Brandon": "en-US-AndrewNeural",
+                "Jacob": "en-US-RogerNeural", "Sara": "en-US-AvaNeural", "Nancy": "en-US-MichelleNeural", "Jane": "en-US-EmmaNeural",
+                "Amber": "en-US-AriaNeural", "Ashley": "en-US-EmmaNeural", "Cora": "en-US-MichelleNeural", "Elizabeth": "en-US-JennyNeural",
+                "Monica": "en-US-AriaNeural"}
+    try:
+        avail = {x["ShortName"] for x in asyncio.run(edge_tts.list_voices())}
+    except Exception as e:
+        avail = set(); print(f"(voice list nahi mili, check skip: {str(e)[:80]})", flush=True)
+    if avail:
+        for who in ("user", "ai", "chatgpt", "gemini", "grok", "claude"):
+            sp = v.get(who)
+            if not sp or sp["voice"] in avail: continue
+            nm = re.sub(r"^[a-z]{2}-[A-Z]{2}-|(Multilingual)?Neural$", "", sp["voice"])
+            alt = FALLBACK.get(nm) or ("en-US-GuyNeural" if any(m in sp["voice"] for m in MALE_VOICES) else "en-US-JennyNeural")
+            if alt not in avail: alt = "en-US-GuyNeural" if "en-US-GuyNeural" in avail else sorted(avail)[0]
+            print(f"(voice {sp['voice']} free service me nahi hai -> {alt} use ho rahi hai)", flush=True)
+            v[who] = dict(sp, voice=alt)
     # ---- har message ka plan (emotion + tukde)
     plans, jobs = {}, {}
     def job(text, sp, rate, vol, pitch):

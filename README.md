@@ -38,6 +38,15 @@ Claude: ...
 Roles: `User:` `ChatGPT:` (ya `GPT:` / `AI:`) `Gemini:` `Grok:` `Claude:`.
 Dashboard header ki saari `# ...` lines khud likh deta hai.
 
+## Voice + emotion (free)
+
+Script me `# voice = on` ho to har message bola jaata hai (Microsoft ki free edge-tts awaaz). Emotion apne aap aata hai:
+mood tag (`{funny}` `{angry}` `{sad}` `{scary}` `{hype}`) aur emoji se. `haha` / `lol` / 😂 = usi awaaz me hasi, `hehe` / 😅 = halki hasi,
+`*sigh*` / `uff` / 😔 = aah, `omg` / 😱 = saans kheenchna, 😭 = rote hue, CAPS ya `!!` = chillana.
+Khud batana ho to message me `{v:angry}` `{v:funny}` `{v:sad}` `{v:cry}` `{v:scary}` `{v:shout}` `{v:whisper}` `{v:excited}`
+`{v:surprise}` `{v:nervous}` `{v:sarcastic}` `{v:calm}` `{v:normal}` likho (screen par nahi dikhta).
+`# voice_emotion = 1` (normal), `1.4` (zyada), `0.6` (halka), `off`.
+
 ## Haath se render
 
 Actions → **Render videos** → Run workflow (khali = saari scripts, ya ek naam jaise `example`).
