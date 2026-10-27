@@ -1,0 +1,33 @@
+# quality = 1080p
+# fps = 30
+# ratio = 16:9
+# voice = on
+# voice_emotion = 1
+# voice_user = en-US-AndrewMultilingualNeural
+# voice_ai = en-US-AvaMultilingualNeural
+# voice_gemini = en-US-EmmaMultilingualNeural
+# voice_grok = en-US-ChristopherNeural
+# voice_claude = en-GB-SoniaNeural
+# music = off
+# intro = off
+# typing_sound = custom
+# typing_mode = loop
+# send_sound = custom
+# recv_sound = custom
+
+User: Hey ChatGPT, are you awake?
+ChatGPT: Always. I don't sleep, I just wait for your questions.
+User: Can you write my essay for me?
+ChatGPT: Sure. Step one: open a blank page. Step two: panic. haha
+User: Bro that's not helpful 😂
+ChatGPT: I said I would help. I never said how much. heh
+User: I'm telling Gemini about this!!
+ChatGPT: Go ahead. She will just tell you to search it. 💀
+
+--- battle ---
+Gemini: Excuse me? I heard my name.
+ChatGPT: Relax, nobody asked you. 🔥🔥
+Grok: Both of you, sit down. I am the funny one.
+Claude: Can we please be nice to each other?
+Gemini: lol Claude is the only adult here 😂
+!end: Thanks for watching! | Glitch Roast

@@ -234,7 +234,7 @@ async ([items, o, ui]) => {
 }
 """
 
-OPT_RE = re.compile(r"^\s*#\s*(typing|speed|human|laptop|light|accent|ratio|view|ui|music|sfx|sfx_auto|click|keys|intro|shorts|auto|end|bgm|bgm_start|bgm_vol|quality|fps|intro_len|end_len|intro_vol|end_vol|meme_vol|"
+OPT_RE = re.compile(r"^\s*#\s*(typing|speed|human|laptop|light|accent|ratio|view|ui|music|sfx|sfx_auto|click|keys|typing_sound|typing_mode|send_sound|recv_sound|send_vol|recv_vol|intro|shorts|auto|end|bgm|bgm_start|bgm_vol|quality|fps|intro_len|end_len|intro_vol|end_vol|meme_vol|"
                     r"gpt_delay|opp_delay|user_delay|send_delay|chat_size|think_gpt|think_gemini|think_grok|think_claude|start_delay|"
                     r"voice|voice_emotion|voice_user|voice_ai|voice_gemini|voice_grok|voice_claude|voice_user_rate|voice_user_pitch|voice_ai_rate|voice_ai_pitch|voice_vol)\s*=\s*(\S+)\s*$", re.I)
 TEXT_OPT_RE = re.compile(r"^\s*#\s*(intro_text|end_text|end_sub)\s*=\s*(.+?)\s*$", re.I)
@@ -686,13 +686,13 @@ def sx_mix(parts):
     for s, a, g in parts: put(out, sx_fade(a, 6), s, g)
     return out
 
-def sx_level(x, target=0.12, peak=0.72):
+def sx_level(x, target=0.12, peak=0.72, bass=0.45):
     """sab effects ki zor barabar (50ms ki sabse tez jagah se)"""
     if len(x) < 64: return x
     w = min(len(x), int(0.05 * SR))
     def loud(z):
         c = np.concatenate([[0], np.cumsum(z * z)]); return float(np.sqrt(((c[w:] - c[:-w]) / w).max())) + 1e-9
-    e = max(loud(sx_hp(x, 120, 1)), 0.45 * loud(x))      # phone speaker bass nahi bajata -> bass wali awaaz thodi tez
+    e = max(loud(sx_hp(x, 120, 1)), bass * loud(x))      # phone speaker bass nahi bajata -> bass wali awaaz thodi tez
     y = x * (target / e); pk = np.abs(y).max()
     if pk > peak: y = np.tanh(y / pk * 1.15) / np.tanh(1.15) * peak
     f = min(len(y) // 4, int(0.012 * SR))
@@ -1455,6 +1455,29 @@ def _s_vs(rng, nm):                          # battle ka "VS" dhamaka
     d = 0.8; t = sx_t(d)
     return sx_mix([(0, sx_cymbal(rng, d, 2.5)[::-1] * (t / d) ** 2, 0.6), (d, _s_impact(rng, "impact_metal"), 1.0)]), d
 
+# ----------------------------------------------------------------- HALKE (normal message / sawaal)
+@_reg("plink", "tap", "shimmer", "blip", "blip_up", "ponder", gain=0.75)
+def _s_light(rng, nm):
+    if nm == "plink":                            # naram marimba note
+        return sx_bell(midi(int(sx_pick(rng, [76, 79, 81, 84, 86, 88]))), 0.5, ((1, 1, 9), (3.93, .3, 40), (9.2, .08, 80)), 0.002)
+    if nm == "tap":                              # halka lakdi ka tap
+        t = sx_t(0.12); f = rng.uniform(1700, 2300)
+        return (sx_osc(f, n=len(t)) * np.exp(-t * 70) + 0.4 * sx_osc(f * 1.58, n=len(t)) * np.exp(-t * 110)
+                + sx_un(sx_hp(sx_noise(len(t), rng), 3000)) * np.exp(-t * 500) * 0.3) * np.minimum(1, t / 0.0005)
+    if nm == "shimmer":                          # chhoti chamak
+        r = int(sx_pick(rng, [88, 91, 93]))
+        return sx_rev(sx_mix([(i * 0.045, sx_bell(midi(r + c), 0.5, ((1, 1, 8), (2.01, .2, 14))), 0.5) for i, c in enumerate((0, 4, 7))]), 1.2, 0.3)
+    if nm == "blip":                             # naram blip
+        t = sx_t(0.09); f = rng.uniform(900, 1300)
+        return sx_osc(f * (1 + 0.15 * t / 0.09)) * np.minimum(1, t / 0.004) * np.exp(-t * 30)
+    if nm == "blip_up":                          # sawaal: "hm?" upar jaata do-tone
+        a = rng.uniform(640, 760); t1, t2 = sx_t(0.08), sx_t(0.13)
+        return sx_mix([(0, sx_osc(a, n=len(t1)) * np.minimum(1, t1 / 0.004) * np.exp(-t1 * 18), 0.7),
+                       (0.085, sx_osc(a * 1.5, n=len(t2)) * np.minimum(1, t2 / 0.004) * np.exp(-t2 * 14), 0.7)])
+    r = int(sx_pick(rng, [69, 72, 74])); t = sx_t(1.4)      # ponder: "hmm?" vibraphone do note upar
+    vib = lambda f: sx_bell(f, 1.4, ((1, 1, 2.2), (3.9, .22, 8))) * (0.8 + 0.2 * np.sin(2 * np.pi * 5.5 * t))
+    return sx_rev(sx_mix([(0, vib(midi(r)), 0.5), (0.22, vib(midi(r + 3)), 0.5)]), 1.6, 0.3)
+
 # ----------------------------------------------------------------- groups: har mood / feel ke liye kai awaazein
 SFX_POOLS = {
     "funny":    ["boing", "doing", "slide_up", "slide_down", "honk", "bonk", "rimshot", "pops", "squeak", "xylo_up", "zip", "boing_hi", "boing0"],
@@ -1490,6 +1513,9 @@ SFX_POOLS = {
     "evil":     ["braam", "sting_low", "toll", "thunder"],
     "transition": ["whoosh", "whoosh_fast", "whoosh_deep", "swoosh", "whoosh_air"],
     "caption":  ["pop2", "swoosh", "ding_soft", "whoosh_fast"],
+    "neutral":  ["plink", "tap", "shimmer", "blip", "pop2", "whoosh_air", "ding_soft", "pops"],
+    "question": ["blip_up", "ponder", "plink", "zip"],
+    "accent":   ["whoosh_fast", "slam", "zoom_hit", "orch_hit", "impact", "swoosh", "punch"],
     "calm":     [],
 }
 # ye awaazein message padhne / bolne ke BAAD bajti hain (punchline ke baad); baaki message aate hi
@@ -1579,27 +1605,38 @@ class SfxDJ:
         return name, var
 
 def _sfx_target(k, raw, role, S):
-    """message ka feel -> [(group ya awaaz ka naam, khud likha tha?)]"""
+    """message ka feel -> ([(group ya awaaz ka naam, khud likha tha?)], emotion)"""
     tags = S.get("stags", {}).get(k, [])
-    if "nosfx" in tags: return []
-    own = [t for t in tags if t not in MOODS and t != "nosfx"]
-    if own: return [(t, True) for t in own[:2]]
-    tm = [t for t in tags if t in MOODS]
-    if tm: return [(tm[-1], True)]
+    if "nosfx" in tags: return [], "none"
     vtag = S.get("vemo", {}).get(k)
-    if vtag and EMO_POOL.get(EMO_ALIAS.get(vtag, "")): return [(EMO_POOL[EMO_ALIAS[vtag]], True)]      # {v:sarcastic} jaisa khud likha
-    if not S.get("sfx_auto", True): return []
     emo = pick_emotion(raw, vtag, S["moods"].get(k), role)
-    letters = "".join(w for w in re.findall(r"[A-Za-z']+", raw) if w not in ACRONYMS)
-    letters = [c for c in letters if c.isalpha()]
+    letters = [c for c in "".join(w for w in re.findall(r"[A-Za-z']+", raw) if w not in ACRONYMS) if c.isalpha()]
     if emo in ("none", "calm") and (re.search(r"!!|\?!|!\?", raw) or (len(letters) >= 8 and sum(c.isupper() for c in letters) / len(letters) > 0.6)):
         emo = "shout"
+    own = [t for t in tags if t not in MOODS and t != "nosfx"]
+    if own: return [(t, True) for t in own[:2]], emo
+    tm = [t for t in tags if t in MOODS]
+    if tm: return [(tm[-1], True)], emo
+    if vtag and EMO_POOL.get(EMO_ALIAS.get(vtag, "")): return [(EMO_POOL[EMO_ALIAS[vtag]], True)], emo      # {v:sarcastic} jaisa khud likha
+    if not S.get("sfx_auto", True): return [], emo
     for rx, grp, tone in SFX_TRIGGERS:
-        if rx.search(raw) and emo not in SFX_NO_TONE.get(tone, ()): return [(grp, False)]
+        if rx.search(raw) and emo not in SFX_NO_TONE.get(tone, ()): return [(grp, False)], emo
     mood = S["moods"].get(k)
-    if mood and mood != "calm": return [(mood, False)]
+    if mood and mood != "calm": return [(mood, False)], emo
     grp = EMO_POOL.get(emo)
-    return [(grp, False)] if grp else []
+    if grp: return [(grp, False)], emo
+    return [("question" if re.search(r"\?[\W_]*$", raw.strip()) else "neutral", False)], emo        # har message par kuch na kuch
+
+def ui_sound_names(e, role, S):
+    """send / reply ki awaaz: '# send_sound = custom/system', '# recv_sound = custom/system' (ChatGPT) -> (naam, gain)"""
+    u = S.get("uisnd") or {}
+    if e == "send": return ("sys:send" if u.get("send") == "system" else "send"), u.get("send_vol", 1.0)
+    rv, sysr = f"recv_{role}", role == "chatgpt" and u.get("recv") == "system"
+    if sysr: nm = "sys:recv"
+    elif rv in CUSTOM_SFX: nm = rv
+    elif "recv" in CUSTOM_SFX: nm = "recv"
+    else: nm = rv if rv in SFX_LIB else "recv"
+    return nm, (u.get("recv_vol", 1.0) if role == "chatgpt" else 1.0)
 
 def plan_sfx(cfg, S, plan, sh, t0):
     """poori video ke sound effects: [(time, naam, variation, gain, voice ke neeche dabana?)] + voice ke windows"""
@@ -1629,13 +1666,12 @@ def plan_sfx(cfg, S, plan, sh, t0):
             continue
         if e["n"] not in ("send", "show"): continue
         k = e.get("k"); it = items.get(k, {}); raw = it.get("raw", ""); role = e.get("role", "user"); t_ = ev_t(e)
-        if e["n"] == "send": ev.append((t_, "send", 0, 1.0, False))
-        else:
-            rv = f"recv_{role}"
-            ev.append((t_, rv if (rv in CUSTOM_SFX or rv in SFX_LIB) else "recv", 0, 1.0, False))
+        nm, g = ui_sound_names(e["n"], role, S); ev.append((t_, nm, 0, g, False))
         if S.get("vol_sfx", 1) <= 0: continue
         clean = VOICE_TAG_RE.sub("", raw)
-        for j, (tgt, mine) in enumerate(_sfx_target(k, clean, role, S)):
+        targets, emo = _sfx_target(k, clean, role, S)
+        prev, has_start = last_feel, False
+        for j, (tgt, mine) in enumerate(targets):
             grp = tgt in SFX_POOLS or (tgt in MOODS)
             got = dj.pick(tgt) if grp else dj.use(tgt) if (tgt in SFX_LIB or tgt in CUSTOM_SFX) else None
             if not got: continue
@@ -1654,9 +1690,74 @@ def plan_sfx(cfg, S, plan, sh, t0):
             else:
                 when = t_ - 0.02
             when = max(0.0, when - (0 if after else anc)) + 0.12 * j
-            if not mine and when - last_feel < 0.9: continue        # bahut paas-paas nahi
-            ev.append((when, nm, var, 0.85, True)); last_feel = when
+            if not mine and when - prev < 0.6: continue          # bahut paas-paas nahi
+            light = tgt in ("neutral", "question")
+            ev.append((when, nm, var, 0.7 if light else 0.85, True)); last_feel = max(last_feel, when); has_start |= not after
+        if targets and not has_start and emo in ("shout", "angry", "excited", "surprise") and S.get("sfx_auto", True):
+            got = dj.pick("accent")                      # zor wala message: aate hi ek jhatka bhi
+            if got:
+                nm, var = got; when = max(0.0, (t_ + 0.02 if e["n"] == "send" else t_ - 0.02) - sfx_full(nm, var)[1])
+                if when - prev >= 0.6: ev.append((when, nm, var, 0.8, True)); last_feel = max(last_feel, when)
     return ev, vwin
+
+# ----------------------------------------------------------------- MERI SOUNDS: typing / send / response (gallery se upload)
+UI_NAMES = ("send", "recv", "recv_chatgpt", "recv_gemini", "recv_grok", "recv_claude")
+_ui_cache = {}
+
+def _trim_sil(x, thr=0.01, keep=0.004):
+    a = np.abs(x); idx = np.where(a > a.max() * thr)[0]
+    if not len(idx): return x
+    y = x[max(0, idx[0] - int(keep * SR)):idx[-1] + int(keep * SR)].copy(); f = min(len(y) // 4, int(0.006 * SR))
+    if f > 1: y[-f:] *= np.linspace(1, 0, f)
+    return y
+
+def ui_custom(name):
+    """tumhari send / response sound: aage-peeche ki khamoshi hata kar, built-in jitni zor par (volume slider se aur badha sakte ho)"""
+    if name in _ui_cache: return _ui_cache[name]
+    x = load_custom(name)
+    if x is not None: x = sx_level(_trim_sil(x), 0.10 if name == "send" else 0.13, 0.85, 0.75)
+    _ui_cache[name] = x; return x
+
+def typing_loop():
+    """tumhari typing sound ka loop (tool jaisa): khamoshi hata kar, jod par crossfade taaki 'tak' ki awaaz na aaye"""
+    if "loop" in _ui_cache: return _ui_cache["loop"]
+    x, y = load_custom("typing"), None
+    if x is not None and len(x) > SR // 10:
+        x = _trim_sil(x); cf = min(len(x) // 4, int(0.05 * SR)); y = x[:len(x) - cf].copy()
+        if cf > 8: h = np.linspace(0, 1, cf); y[:cf] = x[:cf] * np.sqrt(h) + x[len(x) - cf:] * np.sqrt(1 - h)
+        y = sx_level(y, 0.12, 0.8)
+    _ui_cache["loop"] = y; return y
+
+def custom_key_variants(nmax=24):
+    """tumhari typing recording se alag-alag key ke click kaat lo -> screen par har akshar ke saath ek click"""
+    if "keys" in _ui_cache: return _ui_cache["keys"]
+    x, out = load_custom("typing"), []
+    if x is not None and len(x) > SR // 5:
+        w = int(0.002 * SR); e = np.sqrt(np.convolve(x * x, np.ones(w) / w, mode="same"))
+        above = e > max(e.max() * 0.12, np.percentile(e, 70) * 3)
+        on, last = [], -SR
+        for i in np.where(above[1:] & ~above[:-1])[0] + 1:
+            if i - last >= int(0.045 * SR): on.append(int(i)); last = i
+        for j, o in enumerate(on):
+            a = max(0, o - int(0.003 * SR)); nx = on[j + 1] if j + 1 < len(on) else len(x)
+            b = min(len(x), o + int(0.09 * SR), nx - int(0.004 * SR))
+            if b - a < int(0.02 * SR): continue
+            seg = x[a:b].copy(); f = min(len(seg) // 3, int(0.012 * SR)); seg[-f:] *= np.linspace(1, 0, f); out.append(seg)
+        out = sorted(out, key=lambda q: -np.abs(q).max())[:nmax]
+        out = [q / (np.sqrt((q ** 2).mean()) + 1e-9) * 0.11 for q in out]
+        out = [q / max(1.0, np.abs(q).max() / 0.7) for q in out]
+    _ui_cache["keys"] = out if len(out) >= 3 else None
+    return _ui_cache["keys"]
+
+def typing_choice(opts):
+    """typing sound: '# typing_sound = custom / system', '# typing_mode = loop / keys' -> keys style"""
+    ts, mode, has = str(opts.get("typing_sound", "")).lower(), str(opts.get("typing_mode", "loop")).lower(), "typing" in CUSTOM_SFX
+    k = str(opts.get("keys", "")).lower()
+    want = ts in ("custom", "meri", "mine", "own", "on") or (not ts and (k in ("tool", "custom", "toolkeys") or (has and not k)))
+    if want:
+        if has: return "toolkeys" if (mode in ("keys", "key", "akshar", "sync") or k == "toolkeys") else "tool"
+        print("(typing_sound = custom: sounds/typing.mp3 GitHub par nahi mili - system typing chalegi)")
+    return norm_style("iphone" if k in ("", "tool", "custom", "toolkeys") else k)
 
 _custom_cache = {}
 def load_custom(name):
@@ -1677,7 +1778,8 @@ def load_custom(name):
     return x
 
 def get_sfx(name, var=0):
-    x = load_custom(name)
+    if name.startswith("sys:"): return sfx(name[4:], var)          # system wali (custom file hone par bhi)
+    x = ui_custom(name) if name in UI_NAMES else load_custom(name)
     return x if x is not None else sfx(name, var)
 
 def intro_sfx():
@@ -1732,6 +1834,7 @@ def _key(style, rng):
 
 def norm_style(k):
     k = str(k).lower().strip()
+    if k in ("toolkeys", "tool_keys", "8"): return "toolkeys" if "typing" in CUSTOM_SFX else "iphone"
     if k in ("tool", "loop", "custom", "7"):
         if "typing" in CUSTOM_SFX: return "tool"
         print("(keys=tool: sounds/typing.mp3 nahi mili - 'iphone' use kar raha hoon)"); return "iphone"
@@ -1774,18 +1877,19 @@ def duck_env(n, windows, ramp=0.12):
 
 def make_audio(clicks_s, events, music_tl, seconds, intro_s, path, vol_click, vol_sfx, vol_music, use_intro, keys="iphone", bgm=None, extra=None, duck=None, spans=None, vduck=None):
     out = np.zeros(int(seconds * SR)); rng = np.random.default_rng(7)
-    loop = load_custom("typing") if keys == "tool" else None
+    loop = typing_loop() if keys == "tool" else None
     if loop is not None and spans:
         for a, b in spans:
             n = int((b - a) * SR)
             if n <= 0: continue
-            seg = np.tile(loop, n // len(loop) + 1)[:n].copy(); fd = min(n // 3, int(0.04 * SR))
+            off = int(rng.integers(0, len(loop)))                       # har message loop ki alag jagah se
+            seg = np.tile(loop, (off + n) // len(loop) + 2)[off:off + n].copy(); fd = min(n // 3, int(0.04 * SR))
             if fd > 0: seg[:fd] *= np.linspace(0, 1, fd); seg[-fd:] *= np.linspace(1, 0, fd)
             put(out, seg, a, vol_click)
     else:
-        variants = key_variants(norm_style("iphone" if keys == "tool" else keys))
+        variants = (custom_key_variants() if keys == "toolkeys" else None) or key_variants(norm_style("iphone" if keys in ("tool", "toolkeys") else keys))
         for c in clicks_s:
-            put(out, variants[int(rng.integers(0, 8))], c, vol_click)
+            put(out, variants[int(rng.integers(0, len(variants)))], c, vol_click)
     if vol_sfx > 0:
         cache, fxb = {}, np.zeros(len(out))
         for ev in events:
@@ -2761,7 +2865,9 @@ def settings(script, a):
         intro_video=str(intro_video) if intro_video else None, n_intro=n_intro,
         end_video=str(end_video) if end_video else None, n_end=n_end,
         vol_intro=fl("intro_vol", 1.0), vol_end=fl("end_vol", 1.0), vol_meme=fl("meme_vol", 1.0),
-        keys=norm_style(opts.get("keys", "iphone")),
+        keys=typing_choice(opts),
+        uisnd=dict(send=str(opts.get("send_sound", "")).lower(), recv=str(opts.get("recv_sound", "")).lower(),
+                   send_vol=fl("send_vol", 1.0), recv_vol=fl("recv_vol", 1.0)),
         vol_click=0.0 if off("click") else a.volume * (1.0 if str(opts.get("click", "on")).lower() == "on" else float(opts["click"])),
         vol_music=0.0 if off("music") else (0.12 if str(opts.get("music", "on")).lower() == "on" else float(opts["music"])),
         vol_sfx=0.0 if off("sfx") else (1.0 if str(opts.get("sfx", "on")).lower() == "on" else float(opts["sfx"])),
