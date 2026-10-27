@@ -2273,18 +2273,19 @@ def _laugh(syl, rng, ref, big=True):
 
 # ---- asli jaisi hasi: TTS ki awaaz se ek-ek "ha" lekar, insaani hasi ke rhythm / pitch me dobara banana
 #   (har "ha" ~80ms, pehle "h" ki saans, pitch upar se girta, har ha thoda dheema + halka, aakhir me saans andar)
-LAUGH_SRC = {"ha": ("Ha! Hah! Ha!", 4.0, 10), "lo": ("Hah! Ha! Hah!", -3.0, -8), "heh": ("Heh! Heh!", 0.5, 5), "hee": ("Hee! Hee!", 6.0, 10)}
+LAUGH_SRC = {"ha": ("Ha! Hah! Ha!", 5.5, 10), "lo": ("Hah! Ha! Hah!", -2.0, -8), "heh": ("Heh! Heh!", 2.0, 5), "hee": ("Hee! Hee!", 7.0, 10)}
+#   pitch = us insaan ki normal baat se kitna upar (semitone) - asli hasi baat se kaafi oonchi hoti hai
 #              src    calls   IOI shuru/aakhir  vowel shuru/aakhir  pitch  girna  andar  zor-ghate  saans shuru/aakhir  inhale  zor
 LAUGH_STYLE = {
-    "intense":   ("ha",  (7, 9), (0.175, 0.235), (0.085, 0.06), 1.5, 0.45, -2.2, 0.88, (0.25, 0.8), 1.0, 1.0),
-    "big":       ("ha",  (5, 7), (0.185, 0.23), (0.09, 0.065), 1.0, 0.5, -2.0, 0.86, (0.2, 0.55), 0.8, 0.95),
-    "med":       ("ha",  (3, 4), (0.19, 0.22), (0.085, 0.07), 0.5, 0.6, -1.8, 0.82, (0.2, 0.45), 0.3, 0.85),
-    "chuckle":   ("heh", (2, 3), (0.17, 0.19), (0.06, 0.05), 0.0, 0.8, -1.5, 0.75, (0.45, 0.65), 0.0, 0.62),
-    "giggle":    ("hee", (4, 6), (0.14, 0.165), (0.055, 0.045), 0.8, 0.35, -1.2, 0.86, (0.3, 0.5), 0.35, 0.72),
-    "nervous":   ("heh", (2, 2), (0.30, 0.34), (0.06, 0.05), 0.0, 1.0, -1.5, 0.7, (0.5, 0.7), 0.0, 0.55),
-    "sarcastic": ("ha",  (2, 2), (0.42, 0.45), (0.11, 0.10), -3.5, 0.25, -0.6, 0.95, (0.1, 0.12), 0.0, 0.8),
-    "evil":      ("lo",  (5, 6), (0.27, 0.25), (0.15, 0.12), 0.0, 0.25, -1.0, 0.93, (0.1, 0.25), 0.6, 1.0),
-    "wheeze":    ("ha",  (3, 4), (0.16, 0.18), (0.07, 0.06), 2.0, 0.3, -1.5, 0.85, (0.85, 0.95), 1.0, 0.7),
+    "intense":   ("ha",  (7, 9), (0.175, 0.235), (0.085, 0.06), 8.0, 0.45, -2.2, 0.88, (0.25, 0.8), 1.0, 1.0),
+    "big":       ("ha",  (5, 7), (0.185, 0.23), (0.09, 0.065), 7.0, 0.5, -2.0, 0.86, (0.2, 0.55), 0.8, 0.95),
+    "med":       ("ha",  (3, 4), (0.19, 0.22), (0.085, 0.07), 6.0, 0.6, -1.8, 0.82, (0.2, 0.45), 0.3, 0.85),
+    "chuckle":   ("heh", (2, 3), (0.17, 0.19), (0.06, 0.05), 2.5, 0.8, -1.5, 0.75, (0.45, 0.65), 0.0, 0.62),
+    "giggle":    ("hee", (4, 6), (0.14, 0.165), (0.055, 0.045), 9.0, 0.35, -1.2, 0.86, (0.3, 0.5), 0.35, 0.72),
+    "nervous":   ("heh", (2, 2), (0.30, 0.34), (0.06, 0.05), 3.0, 1.0, -1.5, 0.7, (0.5, 0.7), 0.0, 0.55),
+    "sarcastic": ("ha",  (2, 2), (0.42, 0.45), (0.11, 0.10), 1.0, 0.25, -0.6, 0.95, (0.1, 0.12), 0.0, 0.8),
+    "evil":      ("lo",  (5, 6), (0.27, 0.25), (0.15, 0.12), -1.5, 0.25, -1.0, 0.93, (0.1, 0.25), 0.6, 1.0),
+    "wheeze":    ("ha",  (3, 4), (0.16, 0.18), (0.07, 0.06), 7.0, 0.3, -1.5, 0.85, (0.85, 0.95), 1.0, 0.7),
 }
 
 def laugh_style(kind, cue, emo, rng):
@@ -2314,7 +2315,8 @@ def _f0_track(x, fmin=75, fmax=700, frame=0.032, hop=0.005):
     r = ac[:, lo:hi] / (ac[:, :1] + 1e-12) / (wac[lo:hi] / wac[0])
     lag, vv = np.zeros(nf), np.zeros(nf)
     for i in range(nf):
-        j = int(np.where(r[i] >= 0.88 * r[i].max())[0][0])          # pehla uncha peak (octave galti se bacho)
+        rm = float(r[i].max())
+        j = int(np.argmax(r[i])) if not rm > 0 else int(np.where(r[i] >= 0.8 * rm)[0][0])     # pehla uncha peak (octave galti se bacho)
         while j + 1 < r.shape[1] and r[i, j + 1] > r[i, j]: j += 1
         dd = 0.0
         if 0 < j < r.shape[1] - 1:
@@ -2362,12 +2364,24 @@ def _env_noise(nuc, n, rng, bright=0.0):
     y = np.fft.irfft(np.fft.rfft(rng.standard_normal(M)) * E, M)[:n]
     return y / (np.sqrt((y ** 2).mean()) + 1e-9)
 
-def _laugh_nuclei(x):
-    """TTS ki 'Ha! Hah! Ha!' se har 'ha' ka sur-wala hissa (pitch marks ke saath)"""
-    f0, v, e = _f0_track(x)
+def _speech_f0(arrs, male):
+    """is awaaz ki normal baat ki pitch (Hz)"""
+    lo, hi = (70, 260) if male else (140, 480); fs = []
+    try:
+        for a in arrs[:4]:
+            f0, v, e = _f0_track(a, lo, hi)
+            if len(f0): fs += list(f0[(v > 0.6) & (e > 0.15 * e.max())])
+    except Exception:
+        return None
+    return float(np.median(fs)) if len(fs) >= 10 else None
+
+def _laugh_nuclei(x, f_sp=None):
+    """TTS ki 'Ha! Hah! Ha!' se har 'ha' ka sur-wala hissa (pitch marks ke saath). f_sp = us awaaz ki baat ki pitch"""
+    lo, hi = (max(60, f_sp / 2.2), min(900, f_sp * 2.6)) if f_sp else (75, 700)
+    f0, v, e = _f0_track(x, lo, hi)
     if not len(f0): return []
     h, n = int(0.005 * SR), int(0.032 * SR)
-    ok = (v > 0.55) & (e > 0.1 * e.max()) & (f0 > 75) & (f0 < 700)
+    ok = (v > 0.55) & (e > 0.1 * e.max()) & (f0 > lo) & (f0 < hi)
     out, i = [], 0
     while i < len(ok):
         if not ok[i]: i += 1; continue
@@ -2392,16 +2406,18 @@ def _laugh_call(nuc, f_start, glide, vd, asp_d, br, rng, voiced=1.0):
     v = v * np.minimum(1, tv / 0.006) * np.interp(tv, [0, vd * 0.35, vd, vd + 0.03], [1.0, 0.95, 0.65, 0.0])
     na, nt = int(asp_d * SR), int(0.04 * SR); tot = na + nv + nt; ta = np.arange(tot) / SR
     y = _env_noise(nuc["x"], tot, rng, 0.15) * np.interp(ta, [0, 0.004, asp_d, asp_d + 0.01, asp_d + vd, tot / SR],
-                                                         [0, 0.45, 0.38, br * 0.42, br * 0.38, 0]) * 0.9
+                                                         [0, 0.4, 0.34, br * 0.32, br * 0.3, 0]) * 0.9
     y[na:na + nv] += v * voiced
     return y, na
 
-def _laugh2(src, style, rng, ref):
-    nucs = _laugh_nuclei(src)
+def _laugh2(src, style, rng, ref, f_speech=None):
+    sk, (n0, n1), (i0, i1), (v0, v1), T, drop, glide, dec, (b0, b1), p_in, gain = LAUGH_STYLE[style]
+    nucs = _laugh_nuclei(src, f_speech)
     if not nucs: return None
-    sk, (n0, n1), (i0, i1), (v0, v1), st0, drop, glide, dec, (b0, b1), p_in, gain = LAUGH_STYLE[style]
     fsrc = float(np.median([u["f0"] for u in nucs]))
     nucs = [u for u in nucs if abs(np.log2(u["f0"] / fsrc)) < 0.45] or nucs          # galat pitch wale tukde hatao
+    st0 = 12 * np.log2(f_speech * 2 ** (T / 12) / fsrc) if f_speech else 0.0       # pehli "ha" ki pitch (source se)
+    st0 = float(np.clip(st0, -6, 12))
     y = np.zeros(int(8 * SR)); mask = np.zeros(len(y), bool)
     def place(arr, at, vs=None, vn=0):
         s = max(0, int(at * SR)); e = min(len(y), s + len(arr)); y[s:e] += arr[:e - s]
@@ -2581,6 +2597,12 @@ def gen_voice(S, out_dir):
     nwords = 0
     for key, path, words in asyncio.run(run(sorted(needed))):
         if path: load(key, path, words); nwords += len(words)
+    # ---- har awaaz ki normal pitch (hasi ko usse upar rakhne ke liye)
+    vf0 = {}
+    for k, (role, emo, steps, plain, emph) in plans.items():
+        if role in vf0: continue
+        arrs = [got[s[1]][0] for s in steps if s[0] == "say" and s[1] in got and len(got[s[1]][0]) > SR // 4]
+        if arrs: vf0[role] = _speech_f0(arrs, any(nm in (v.get(role) or v["ai"])["voice"] for nm in MALE_VOICES))
     # ---- har message jodo
     out = {}
     for k, (role, emo, steps, plain, emph) in plans.items():
@@ -2613,7 +2635,11 @@ def gen_voice(S, out_dir):
                 parts.append(x); prev = text or "."; n_say += 1; used.append(e + ("!" if loud else ""))
             elif kind in ("laugh", "chuckle"):
                 if key not in got: continue
-                try: lg = _laugh2(got[key][0], text, rng, ref)
+                try:
+                    male = any(nm in (v.get(role) or v["ai"])["voice"] for nm in MALE_VOICES)
+                    arrs = [got[s[1]][0] for s in steps if s[0] == "say" and s[1] in got and len(got[s[1]][0]) > SR // 4]
+                    fsp = (_speech_f0(arrs, male) if arrs else None) or vf0.get(role) or (120.0 if male else 210.0)
+                    lg = _laugh2(got[key][0], text, rng, ref, fsp)
                 except Exception as ex: print(f"(hasi: naya tareeka fail, purana use: {ex})", flush=True); lg = None
                 if lg is None: lg = _laugh(_syllables(got[key][0]), rng, ref, kind == "laugh")
                 parts += [np.zeros(int(0.06 * SR)), lg, np.zeros(int(0.06 * SR))]; prev = None; used.append(f"{kind}:{text}")
