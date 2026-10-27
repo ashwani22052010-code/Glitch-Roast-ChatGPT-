@@ -6,3 +6,4 @@ voice_demo,https://github.com/ashwani22052010-code/Glitch-Roast-ChatGPT-/release
 voice_demo,https://github.com/ashwani22052010-code/Glitch-Roast-ChatGPT-/releases/download/v-40433315720-1/voice_demo.mp4
 sfx_demo,https://github.com/ashwani22052010-code/Glitch-Roast-ChatGPT-/releases/download/v-40439266792-1/sfx_demo.mp4
 sfx_demo,https://github.com/ashwani22052010-code/Glitch-Roast-ChatGPT-/releases/download/v-40440330919-1/sfx_demo.mp4
+mysound_demo,https://github.com/ashwani22052010-code/Glitch-Roast-ChatGPT-/releases/download/v-40475833426-1/mysound_demo.mp4
