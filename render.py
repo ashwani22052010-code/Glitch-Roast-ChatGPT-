@@ -197,14 +197,15 @@ async ([items, o, ui]) => {
       autoResize(inp); updateButtonsState();
     };
     await sleep(50);
-    if (!HUMAN || perChar) {                         // purana seedha flow (voice ke saath sync ho to bhi)
+    if (!HUMAN) {                                    // purana seedha flow
       for (const ch of Array.from(text || '')) {
         typed += ch; show(); if (ch.trim()) click();
         await sleep(perChar ? perChar * (0.7 + Math.random() * 0.6) : 30 / typingSpeed);
       }
       inp.innerHTML = esc(typed); autoResize(inp); updateButtonsState(); span[1] = now(); return;
     }
-    const base = 30 / typingSpeed, ps = 1 / Math.sqrt(Math.max(0.2, typingSpeed));
+    // voice ho to typing awaaz se tez nahi (dono saath khatam hon); warna typing speed jaisi
+    const base = Math.max(30 / typingSpeed, perChar ? perChar * 0.8 : 0), ps = 1 / Math.sqrt(Math.max(0.2, typingSpeed));
     const pause = async ms => {                      // ruka = typing ki awaaz bhi ruki
       if (ms < 140) { await sleep(ms); return; }
       span[1] = now(); await sleep(ms); span = [now(), null]; TY.push(span);
@@ -316,6 +317,7 @@ async ([items, o, ui]) => {
         VS[k] = now() + 50;
         const n = Array.from(txt || '').length;
         await typeIt(txt, vd && n ? Math.max(12, Math.min(400, vd * 1000 / (n + 1))) : 0);
+        if (vd) { const left = VS[k] + vd * 1000 - now(); if (left > 0) await sleep(left + 150); }   // awaaz poori hone tak ruko
         await sleep((getSendDelay() * 1000 * (HUMAN ? rnd(0.45, 1.3) : 1)) / spd);
         if (meme) await window.memeHold(meme);
         const inp = document.getElementById('chatInput'), fin = inp.innerText.trim(), fimg = inputImageData;
@@ -2300,6 +2302,7 @@ def tts_clean(t):
     t = EMOJI_RE.sub(" ", t)
     t = re.sub(r"[*`]+", "", t)
     t = re.sub(r"[_#>~|]+", " ", t)
+    t = re.sub(r"([A-Za-z])\1{5,}", lambda m: m.group(1) * 6, t)
     return re.sub(r"\s+", " ", t).strip()
 
 # ================================================================= VOICE + EMOTION (free: edge-tts + jugaad)
