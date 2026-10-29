@@ -2,6 +2,7 @@
 # fps = 30
 # ratio = 16:9
 # voice = on
+# voice_emotion = off
 # typing = 0.4
 # human = on
 # intro = off
