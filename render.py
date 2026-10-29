@@ -200,7 +200,7 @@ async ([items, o, ui]) => {
     if (!HUMAN) {                                    // purana seedha flow
       for (const ch of Array.from(text || '')) {
         typed += ch; show(); if (ch.trim()) click();
-        await sleep(perChar ? perChar * (0.7 + Math.random() * 0.6) : 30 / typingSpeed);
+        await sleep(Math.max(30 / typingSpeed, perChar || 0) * (perChar ? (0.7 + Math.random() * 0.6) : 1));
       }
       inp.innerHTML = esc(typed); autoResize(inp); updateButtonsState(); span[1] = now(); return;
     }
@@ -2824,6 +2824,41 @@ def _gap(prev_text, e):
     g = 0.36 if prev_text.endswith(("...", "…")) else 0.25 if prev_text.endswith("?") else 0.2 if prev_text.endswith("!") else 0.22 if prev_text.endswith(".") else 0.16
     return g * (1.35 if e in SLOW_EMO else 0.75 if e in FAST_EMO else 1.0)
 
+STRETCH_RUN = re.compile(r"([A-Za-z])\1{5,}")
+def _sustain(x, words, raw, per_letter=0.035, max_s=18.0):
+    """raw me jitne lambe 'EEEE' hain, TTS ki awaaz me wo shabd utna lamba (har akshar ~35ms)"""
+    runs = [len(m.group(0)) for m in STRETCH_RUN.finditer(EMOJI_RE.sub(" ", raw or ""))]
+    if not runs or not words: return x
+    todo = []
+    for s, e, w in words:
+        if runs and STRETCH_RUN.search(str(w)):
+            L = runs.pop(0); extra = min(max_s, (L - 6) * per_letter)
+            if extra > 0.05: todo.append((s, e, extra))
+    for s, e, extra in reversed(todo):
+        a, b = int(max(0, s) * SR), int(min(len(x) / SR, e) * SR)
+        if b - a < int(0.08 * SR): continue
+        c0, c1 = a + int(0.35 * (b - a)), a + int(0.85 * (b - a))          # shabd ka beech = vowel
+        core = x[c0:c1].astype(float)
+        n_out = len(core) + int(extra * SR)
+        try:
+            f0, vv, _ = _f0_track(core)
+            good = f0[vv > 0.5]
+            if len(good) < 4: raise ValueError("vowel nahi mili")
+            fm = float(np.median(good)); fr = np.where(vv > 0.5, f0, fm)
+            marks, per = _pitch_marks(core, fr, int(0.005 * SR))
+            if len(marks) < 4: raise ValueError("marks kam")
+            y = _psola(core, marks, per, lambda tt: fm * (1 + 0.012 * np.sin(2 * np.pi * 5.2 * tt)), n_out, k=len(core) / n_out)
+            y *= (np.sqrt((core ** 2).mean()) + 1e-9) / (np.sqrt((y ** 2).mean()) + 1e-9)
+        except Exception:
+            seg = core[len(core) // 4: 3 * len(core) // 4]
+            y = np.tile(seg, int(np.ceil(n_out / max(1, len(seg)))) + 1)[:n_out]
+        f = min(len(y) // 4, len(core) // 4, int(0.02 * SR))
+        if f > 2:
+            y[:f] = y[:f] * np.linspace(0, 1, f) + core[:f] * np.linspace(1, 0, f)
+            y[-f:] = y[-f:] * np.linspace(1, 0, f) + core[-f:] * np.linspace(0, 1, f)
+        x = np.concatenate([x[:c0], y, x[c1:]])
+    return x
+
 def gen_voice(S, out_dir):
     """har message ki awaaz (edge-tts, free) + emotion -> {k: {file, dur}}"""
     v = S["voice"]
@@ -2931,6 +2966,7 @@ def gen_voice(S, out_dir):
             if kind == "say":
                 if key not in got or not len(got[key][0]): continue
                 x, words = got[key]
+                x = _sustain(x, words, S["vtexts"][k][1])
                 if strength > 0:
                     x = _word_edit(x, words, e, emph, rng, strength, ref)
                     x = _breathy(x, rng, EMO.get(e, EMO["none"])[3] * min(1.0, strength) if e != "whisper" else 1.0)
